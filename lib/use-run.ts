@@ -71,16 +71,22 @@ function reducer(state: RunState, action: Action): RunState {
       };
     case "agent_error":
       return { ...state, nodes: updateNode(state.nodes, action.agentId, { state: "error", error: action.error }) };
-    case "agent_tool_call":
-      return { ...state, nodes: updateNode(state.nodes, action.agentId, { toolCall: { to: action.to, reason: action.reason } }) };
+    case "agent_tool_call": {
+      const toolId = `tool:${action.to}`;
+      const withAgentUpdate = updateNode(state.nodes, action.agentId, { toolCall: { to: action.to, reason: action.reason } });
+      const nodes = withAgentUpdate.some((n) => n.id === toolId)
+        ? updateNode(withAgentUpdate, toolId, { state: "active" })
+        : [...withAgentUpdate, { id: toolId, role: action.to, state: "active" as const, output: "", tokens: 0, durationMs: 0 }];
+      return { ...state, nodes };
+    }
     case "agent_tool_result":
       return {
         ...state,
-        nodes: state.nodes.map((n) =>
-          n.id === action.agentId
-            ? { ...n, output: n.output + `\n\n[${action.toolName} → ${action.result}]\n\n` }
-            : n
-        ),
+        nodes: state.nodes.map((n) => {
+          if (n.id === action.agentId) return { ...n, output: n.output + `\n\n[${action.toolName} → ${action.result}]\n\n` };
+          if (n.id === `tool:${action.toolName}`) return { ...n, state: "done" as const };
+          return n;
+        }),
       };
     case "agent_waiting":
       return { ...state, nodes: updateNode(state.nodes, action.agentId, { state: "waiting" }) };

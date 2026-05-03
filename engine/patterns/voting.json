@@ -4,6 +4,12 @@
   "category": "Aggregation",
   "summary": "N agents solve the same task independently; a judge picks the strongest answer.",
   "about": "Four agents tackle the identical prompt independently, each producing their own solution. A Judge reads all four and selects the best one, explaining its reasoning before outputting the winner. Useful when correctness matters more than cost — redundancy catches errors a single agent would miss.",
+  "example_prompts": [
+    "Best programming language for a startup's first product",
+    "Is AI a net positive or negative for software developers?",
+    "Should teams prioritise TypeScript over JavaScript for new projects?",
+    "Tabs vs spaces: which side is objectively correct?"
+  ],
   "output": "$judge.output",
   "nodes": {
     "solver": {

@@ -115,6 +115,7 @@ export interface Flow {
   summary: string;
   about: string;
   output?: string;
+  example_prompts?: string[];
   nodes?: Record<string, NodeDef>;
   execution: Step;
 }

@@ -4,6 +4,12 @@
   "category": "Aggregation",
   "summary": "Orchestrator splits task into subtasks; specialists run in parallel.",
   "about": "An orchestrator analyzes the prompt and breaks it into 3–5 focused subtasks. Specialist agents run in parallel, each blind to the others. A synthesizer merges all outputs into a coherent final response.",
+  "example_prompts": [
+    "Build a personal finance tracker web app",
+    "Migrate a monolith to microservices",
+    "Set up a machine learning pipeline for fraud detection",
+    "Launch a technical blog from scratch"
+  ],
   "output": "$synthesizer.output",
   "nodes": {
     "orchestrator": {

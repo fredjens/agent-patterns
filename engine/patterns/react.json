@@ -4,6 +4,12 @@
   "category": "Single-Agent",
   "summary": "Single agent loops through reason → tool call → observe until it reaches a final answer.",
   "about": "ReAct (Reasoning + Acting) gives one agent access to tools. Each turn: reason about the problem, call a tool if more information is needed, observe the result, then repeat. The loop ends when the agent can answer without calling any tools. Available tools: calculate (real math) and search (simulated).",
+  "example_prompts": [
+    "How much would $8,000 grow at 6% compounded annually for 20 years?",
+    "What's an 18% tip on $94.50 split between 3 people?",
+    "What are the current EU AI Act enforcement deadlines?",
+    "Compare the energy density of lithium-ion vs solid-state batteries"
+  ],
   "output": "$react_agent.output",
   "nodes": {
     "react_agent": {

@@ -42,6 +42,7 @@ export default function PatternPage({ params }: { params: Promise<{ id: string }
   function handleRun() {
     if (!prompt.trim()) return;
     startRun(prompt, patternId);
+    setPrompt("");
   }
 
   return (
@@ -61,7 +62,7 @@ export default function PatternPage({ params }: { params: Promise<{ id: string }
           <div className="flex-1 border-r border-zinc-800 flex flex-col overflow-y-auto">
             <p className="px-6 pt-4 text-sm text-zinc-400 leading-relaxed">{pattern.about}</p>
             <div className="flex-1 flex items-center justify-center p-6">
-              <TopologyRenderer flow={flow} nodes={state.nodes} onNodeClick={handleNodeClick} />
+              <TopologyRenderer flow={flow} nodes={state.nodes} onNodeClick={handleNodeClick} selectedId={inspectedNodeId} />
             </div>
             {inspectedNodeId && (
               <NodeInspector
@@ -86,6 +87,7 @@ export default function PatternPage({ params }: { params: Promise<{ id: string }
             <PromptPanel
               prompt={prompt}
               running={state.status === "running"}
+              examplePrompts={flow.example_prompts}
               onPromptChange={setPrompt}
               onRun={handleRun}
               onAbort={abort}

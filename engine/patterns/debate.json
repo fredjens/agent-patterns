@@ -4,6 +4,12 @@
   "category": "Dynamic",
   "summary": "Agents argue opposing perspectives across rounds; moderator synthesizes.",
   "about": "Three debaters (Optimist, Skeptic, Pragmatist) argue different angles in two parallel rounds. Round 1: independent arguments. Round 2: rebuttals after seeing all Round 1 positions. A moderator frames the question and synthesizes the final verdict.",
+  "example_prompts": [
+    "Should AI-generated art be eligible for copyright protection?",
+    "Is a four-day work week realistic for most industries?",
+    "Nuclear power: necessary for the energy transition or too risky?",
+    "Is remote work better for productivity than office?"
+  ],
   "output": "$moderator-conclude.output",
   "nodes": {
     "moderator-frame": {

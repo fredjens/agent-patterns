@@ -4,6 +4,12 @@
   "category": "Linear",
   "summary": "Planner creates an ordered task list; executor works through each step sequentially, building on prior results.",
   "about": "A Planner analyzes the goal and produces an ordered list of 3–5 concrete steps where each builds on the last. An Executor works through each step in sequence — unlike Decomposition where tasks are parallel and independent, here each step can see what was completed before it. A Summarizer combines the results. Best for tasks with natural ordering: research → draft → refine, or setup → implement → test.",
+  "example_prompts": [
+    "Design a RESTful API for a task management app",
+    "Getting started with Rust for Python developers",
+    "Set up a CI/CD pipeline for a Node.js application",
+    "Meal plan for someone training for a marathon"
+  ],
   "output": "$summarizer.output",
   "nodes": {
     "planner": {

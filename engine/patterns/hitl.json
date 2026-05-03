@@ -4,6 +4,12 @@
   "category": "Human-in-the-Loop",
   "summary": "Agents pause at checkpoints for human review — approve to continue, or reject with feedback.",
   "about": "A researcher gathers findings, then pauses for your review before a writer continues. The draft pauses again for final approval before an editor polishes it. Approve to proceed (with optional notes that feed into the next agent), or reject to stop the run. Demonstrates how human oversight slots into an automated pipeline.",
+  "example_prompts": [
+    "Draft a refund policy for a B2B SaaS product",
+    "Write an onboarding email for a new enterprise customer",
+    "Summarise Q3 engineering priorities for the board",
+    "Draft a performance review template for senior engineers"
+  ],
   "output": "$editor.output",
   "nodes": {
     "researcher": {

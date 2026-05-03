@@ -4,6 +4,12 @@
   "category": "Linear",
   "summary": "Sequential chain — each agent refines the previous output.",
   "about": "Four agents in a fixed sequence. Drafter writes a first draft, Critic identifies weaknesses, Refiner incorporates the feedback, Editor polishes the final result. The simplest multi-agent pattern — no fan-out, no routing, no loops.",
+  "example_prompts": [
+    "Getting started with Rust for Python developers",
+    "Write a technical deep-dive on vector databases",
+    "Meal plan for someone training for a marathon",
+    "Explain transformer architecture for a software engineer"
+  ],
   "output": "$editor.output",
   "nodes": {
     "drafter": {

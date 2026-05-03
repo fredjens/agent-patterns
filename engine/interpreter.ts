@@ -246,7 +246,8 @@ async function executeNode(
 
   const localContext = { ...context, ...extra };
   const inputs = resolveInputs(node.inputs, localContext);
-  const userContent = buildUserContent(inputs);
+  const userContent = buildUserContent(inputs)
+    || String(resolvePath("$input.prompt", localContext) ?? "");
 
   // Brevity suffix keeps demo outputs short and scannable
   const system = node.system + "\n\nBe concise — 2–3 short paragraphs or a tight bullet list. No preamble or filler.";

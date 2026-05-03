@@ -13,7 +13,10 @@ export const calculate = tool({
   }),
   execute: async ({ expression }) => {
     try {
-      const safe = expression.replace(/[^0-9+\-*/().%\s]/g, "");
+      const normalised = expression
+        .replace(/\^/g, "**")
+        .replace(/Math\.pow\(([^,)]+),([^)]+)\)/g, "(($1)**($2))");
+      const safe = normalised.replace(/[^0-9+\-*/().%\s]/g, "");
       if (!safe.trim()) return "Error: empty or invalid expression";
       const result = new Function(`return (${safe})`)();
       return typeof result === "number"

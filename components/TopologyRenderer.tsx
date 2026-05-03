@@ -7,6 +7,7 @@ interface Props {
   flow: Flow;
   nodes: AgentNodeState[];
   onNodeClick?: (id: string) => void;
+  selectedId?: string | null;
 }
 
 function ghost(id: string, def: { role?: string } | undefined): AgentNodeState {
@@ -51,7 +52,7 @@ function TemplateBox({ label, children }: { label: string; children: React.React
 }
 
 // Stacked diagonal cards — parallel map template (multiple copies, all at once)
-function StackedTemplate({ node, countHint, onClick }: { node: AgentNodeState; countHint?: string; onClick: () => void }) {
+function StackedTemplate({ node, countHint, onClick, selected }: { node: AgentNodeState; countHint?: string; onClick?: () => void; selected: boolean }) {
   return (
     <div className="flex flex-col items-center gap-3">
       {/* outer wrapper provides overflow space; inner relative is sized to the card only */}
@@ -60,7 +61,7 @@ function StackedTemplate({ node, countHint, onClick }: { node: AgentNodeState; c
           <div className="absolute inset-0 translate-x-2.5 translate-y-2.5 rounded-lg border border-zinc-700/60 bg-zinc-800/60" />
           <div className="absolute inset-0 translate-x-[5px] translate-y-[5px] rounded-lg border border-zinc-700/40 bg-zinc-800/40" />
           <div className="relative">
-            <AgentNode node={node} onClick={onClick} />
+            <AgentNode node={node} onClick={onClick} selected={selected} />
           </div>
         </div>
       </div>
@@ -73,14 +74,18 @@ function Seq({ children }: { children: React.ReactNode }) {
   return <div className="flex flex-col items-center gap-5">{children}</div>;
 }
 
-function RenderStep({ step, flow, nodes, onNodeClick }: { step: Step; flow: Flow; nodes: AgentNodeState[]; onNodeClick: (id: string) => void }) {
+function click(onNodeClick: ((id: string) => void) | undefined, id: string): (() => void) | undefined {
+  return onNodeClick ? () => onNodeClick(id) : undefined;
+}
+
+function RenderStep({ step, flow, nodes, onNodeClick, selectedId }: { step: Step; flow: Flow; nodes: AgentNodeState[]; onNodeClick: ((id: string) => void) | undefined; selectedId: string | null | undefined }) {
   switch (step.type) {
 
     case "sequence": {
       return (
         <Seq>
           {step.steps.map((s, i) => (
-            <RenderStep key={i} step={s} flow={flow} nodes={nodes} onNodeClick={onNodeClick} />
+            <RenderStep key={i} step={s} flow={flow} nodes={nodes} onNodeClick={onNodeClick} selectedId={selectedId} />
           ))}
         </Seq>
       );
@@ -88,7 +93,7 @@ function RenderStep({ step, flow, nodes, onNodeClick }: { step: Step; flow: Flow
 
     case "node": {
       const node = getNode(step.id, flow.nodes?.[step.id], nodes);
-      return <AgentNode node={node} onClick={() => onNodeClick(step.id)} />;
+      return <AgentNode node={node} onClick={click(onNodeClick, step.id)} selected={selectedId === step.id} />;
     }
 
     case "parallel": {
@@ -96,7 +101,7 @@ function RenderStep({ step, flow, nodes, onNodeClick }: { step: Step; flow: Flow
       return (
         <div className="flex flex-col items-center gap-2">
           {step.label && <Tag text={step.label} />}
-          <Row>{parallelNodes.map((n) => <AgentNode key={n.id} node={n} onClick={() => onNodeClick(n.id)} />)}</Row>
+          <Row>{parallelNodes.map((n) => <AgentNode key={n.id} node={n} onClick={click(onNodeClick, n.id)} selected={selectedId === n.id} />)}</Row>
         </div>
       );
     }
@@ -107,9 +112,9 @@ function RenderStep({ step, flow, nodes, onNodeClick }: { step: Step; flow: Flow
 
       if (spawned.length > 0) {
         if (step.sequential) {
-          return <Seq>{spawned.map((n) => <AgentNode key={n.id} node={n} onClick={() => onNodeClick(n.id)} />)}</Seq>;
+          return <Seq>{spawned.map((n) => <AgentNode key={n.id} node={n} onClick={click(onNodeClick, n.id)} selected={selectedId === n.id} />)}</Seq>;
         }
-        return <Row>{spawned.map((n) => <AgentNode key={n.id} node={n} onClick={() => onNodeClick(n.id)} />)}</Row>;
+        return <Row>{spawned.map((n) => <AgentNode key={n.id} node={n} onClick={click(onNodeClick, n.id)} selected={selectedId === n.id} />)}</Row>;
       }
 
       const hasTemplate = /\{\{[^}]+\}\}/.test(templateDef?.role ?? "");
@@ -121,11 +126,11 @@ function RenderStep({ step, flow, nodes, onNodeClick }: { step: Step; flow: Flow
       if (step.sequential) {
         return (
           <TemplateBox label={`×${step.count_hint ?? "N"} · sequential`}>
-            <AgentNode node={templateGhost} onClick={() => onNodeClick(step.template)} />
+            <AgentNode node={templateGhost} onClick={click(onNodeClick, step.template)} selected={selectedId === step.template} />
           </TemplateBox>
         );
       }
-      return <StackedTemplate node={templateGhost} countHint={step.count_hint} onClick={() => onNodeClick(step.template)} />;
+      return <StackedTemplate node={templateGhost} countHint={step.count_hint} onClick={click(onNodeClick, step.template)} selected={selectedId === step.template} />;
     }
 
     case "repeat": {
@@ -135,7 +140,7 @@ function RenderStep({ step, flow, nodes, onNodeClick }: { step: Step; flow: Flow
         ? spawned
         : Array.from({ length: step.count }, (_, i) => ghost(`${step.template}-${i}`, templateDef));
       return (
-        <Row>{displayNodes.map((n) => <AgentNode key={n.id} node={n} onClick={() => onNodeClick(step.template)} />)}</Row>
+        <Row>{displayNodes.map((n) => <AgentNode key={n.id} node={n} onClick={click(onNodeClick, step.template)} selected={selectedId === step.template} />)}</Row>
       );
     }
 
@@ -146,7 +151,7 @@ function RenderStep({ step, flow, nodes, onNodeClick }: { step: Step; flow: Flow
           {candidates.map((n, i) => (
             <div key={n.id} className="flex items-center gap-2">
               {i > 0 && <span className="text-[10px] uppercase tracking-widest text-zinc-600 px-0.5">or</span>}
-              <AgentNode node={n} onClick={() => onNodeClick(n.id)} />
+              <AgentNode node={n} onClick={click(onNodeClick, n.id)} selected={selectedId === n.id} />
             </div>
           ))}
         </div>
@@ -158,7 +163,7 @@ function RenderStep({ step, flow, nodes, onNodeClick }: { step: Step; flow: Flow
         <GroupBox label={`loop · max ${step.max_iterations ?? 3}`}>
           <Seq>
             {step.steps.map((s, i) => (
-              <RenderStep key={i} step={s} flow={flow} nodes={nodes} onNodeClick={onNodeClick} />
+              <RenderStep key={i} step={s} flow={flow} nodes={nodes} onNodeClick={onNodeClick} selectedId={selectedId} />
             ))}
           </Seq>
         </GroupBox>
@@ -173,7 +178,7 @@ function RenderStep({ step, flow, nodes, onNodeClick }: { step: Step; flow: Flow
       const anyCanReroute = specialists.some((n) => (n.can_handoff_to?.length ?? 0) > 0);
       return (
         <Seq>
-          {entryNode && <AgentNode node={entryNode} onClick={() => onNodeClick(step.entry)} />}
+          {entryNode && <AgentNode node={entryNode} onClick={click(onNodeClick, step.entry)} selected={selectedId === step.entry} />}
           <GroupBox label={anyCanReroute ? "pool · agents may re-route" : "pool"}>
             <Row>
               {specialists.map((def) => {
@@ -182,7 +187,7 @@ function RenderStep({ step, flow, nodes, onNodeClick }: { step: Step; flow: Flow
                 const targetRoles = targets.map((tid) => pool.find((p) => p.id === tid)?.role ?? tid);
                 return (
                   <div key={def.id} className="flex flex-col items-center gap-1">
-                    <AgentNode node={n} onClick={() => onNodeClick(def.id)} />
+                    <AgentNode node={n} onClick={click(onNodeClick, def.id)} selected={selectedId === def.id} />
                     {targetRoles.length > 0 && (
                       <div className="flex flex-wrap justify-center gap-1 mt-1">
                         {targetRoles.map((r) => (
@@ -209,7 +214,7 @@ function RenderStep({ step, flow, nodes, onNodeClick }: { step: Step; flow: Flow
       return (
         <GroupBox label={`tool loop · max ${step.max_steps ?? 8} steps`}>
           <Seq>
-            <AgentNode node={agentNode} onClick={() => onNodeClick(agentId)} />
+            <AgentNode node={agentNode} onClick={click(onNodeClick, agentId)} selected={selectedId === agentId} />
             <Row>
               {toolNames.map((t) => {
                 // Fake walker spawns synthetic `tool:<name>` nodes to flash these on
@@ -241,7 +246,7 @@ function RenderStep({ step, flow, nodes, onNodeClick }: { step: Step; flow: Flow
       return (
         <div className="flex flex-col items-center gap-1.5">
           <p className="text-xs text-amber-700 uppercase tracking-widest">▼ human review</p>
-          <AgentNode node={cpNode} onClick={() => onNodeClick(cpId)} />
+          <AgentNode node={cpNode} onClick={click(onNodeClick, cpId)} selected={selectedId === cpId} />
         </div>
       );
     }
@@ -251,10 +256,10 @@ function RenderStep({ step, flow, nodes, onNodeClick }: { step: Step; flow: Flow
   }
 }
 
-export function TopologyRenderer({ flow, nodes, onNodeClick = () => {} }: Props) {
+export function TopologyRenderer({ flow, nodes, onNodeClick, selectedId }: Props) {
   return (
     <div className="flex items-center justify-center w-full py-4">
-      <RenderStep step={flow.execution} flow={flow} nodes={nodes} onNodeClick={onNodeClick} />
+      <RenderStep step={flow.execution} flow={flow} nodes={nodes} onNodeClick={onNodeClick} selectedId={selectedId} />
     </div>
   );
 }

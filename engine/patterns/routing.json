@@ -4,6 +4,12 @@
   "category": "Selection",
   "summary": "Router reads the prompt and picks the best specialist for the job.",
   "about": "A router analyzes the prompt and selects exactly one specialist from a pool. Only the chosen specialist runs. Contrast with Decomposition (all specialists run) — here selection is the strategy, not aggregation.",
+  "example_prompts": [
+    "Compare the latest Claude and GPT models for coding tasks",
+    "Explain how Kubernetes autoscaling works",
+    "Best practices for securing a REST API",
+    "Getting started with Rust for Python developers"
+  ],
   "nodes": {
     "router": {
       "role": "Router",

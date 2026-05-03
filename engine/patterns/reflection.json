@@ -4,37 +4,33 @@
   "category": "Iteration",
   "summary": "Single agent generates, critiques itself, and refines — loops until satisfied.",
   "about": "One agent iterates through Generate → Critique → Refine up to 3 times. The critic explicitly says 'SATISFIED' when quality is good enough, ending the loop early. Demonstrates self-improvement without external feedback.",
-  "output": "$refiner.output",
+  "example_prompts": [
+    "Explain quantum entanglement to a curious 12-year-old",
+    "Write a one-paragraph pitch for a developer productivity tool",
+    "Summarise the CAP theorem using only a food analogy",
+    "Trade-offs between microservices and monolithic architecture"
+  ],
+  "output": "$generator.output",
   "nodes": {
     "generator": {
       "role": "Generator",
-      "description": "Produces a response — uses previous refinement if available",
-      "system": "You are a Generator. Produce a clear, complete response to the prompt. If a previous draft is provided, use it as your starting point and improve it.",
+      "description": "Drafts or revises based on the original prompt and any critic feedback",
+      "system": "You are a Generator. On the first pass, produce a solid draft responding to the prompt. On subsequent passes, you will receive critic feedback — revise your draft to address every point raised.",
       "inputs": {
-        "prompt":         { "from": "$input.prompt",    "description": "The original prompt" },
-        "previous_draft": { "from": "$refiner.output",  "description": "Previous refined draft (empty on first iteration)" }
+        "prompt":   { "from": "$input.prompt",   "description": "The original prompt" },
+        "feedback": { "from": "$critic.output",  "description": "Critic feedback from the previous round (empty on first iteration)" }
       },
-      "output": { "format": "text", "description": "Current best response" }
+      "output": { "format": "text", "description": "Current best draft" }
     },
     "critic": {
       "role": "Critic",
       "description": "Evaluates quality — outputs SATISFIED or specific feedback",
-      "system": "You are a Critic. Evaluate the draft against the original prompt. If the draft is good enough, start your response with the word SATISFIED and briefly explain why. Otherwise list specific, actionable improvements needed.",
+      "system": "You are a demanding Critic. Only say SATISFIED (as the first word) if the draft is excellent — well-structured, specific with no vague claims, and would impress a subject-matter expert. In all other cases, list at least two concrete, actionable improvements. Be strict: a merely adequate draft is not good enough.",
       "inputs": {
         "prompt": { "from": "$input.prompt",     "description": "The original prompt" },
         "draft":  { "from": "$generator.output", "description": "The draft to evaluate" }
       },
       "output": { "format": "text", "description": "SATISFIED, or specific improvement feedback" }
-    },
-    "refiner": {
-      "role": "Refiner",
-      "description": "Applies the critic's feedback to improve the draft",
-      "system": "You are a Refiner. Improve the draft based on the critic's feedback. If the critic said SATISFIED, return the draft unchanged.",
-      "inputs": {
-        "draft":    { "from": "$generator.output", "description": "The draft to improve" },
-        "feedback": { "from": "$critic.output",    "description": "The critic's feedback" }
-      },
-      "output": { "format": "text", "description": "Improved draft" }
     }
   },
   "execution": {
@@ -43,8 +39,7 @@
     "until": { "node": "critic", "output_contains": "SATISFIED" },
     "steps": [
       { "type": "node", "id": "generator" },
-      { "type": "node", "id": "critic" },
-      { "type": "node", "id": "refiner" }
+      { "type": "node", "id": "critic" }
     ]
   }
 }

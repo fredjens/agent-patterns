@@ -42,6 +42,7 @@ const STATE_TEXT: Record<string, string> = {
 interface Props {
   node: AgentNodeState;
   onClick?: () => void;
+  selected?: boolean;
 }
 
 // Re-renders every 100ms while running so the timer counts up live; freezes on `done`.
@@ -55,7 +56,7 @@ function useLiveElapsedMs(startedAt: number | undefined, running: boolean): numb
   return startedAt ? now - startedAt : 0;
 }
 
-export function AgentNode({ node, onClick }: Props) {
+export function AgentNode({ node, onClick, selected }: Props) {
   const state = node.state ?? "idle";
   const isRunning = state === "active" || state === "streaming";
   const liveMs = useLiveElapsedMs(node.startedAt, isRunning);
@@ -64,15 +65,26 @@ export function AgentNode({ node, onClick }: Props) {
   return (
     <div
       onClick={onClick}
+      title={onClick && !selected ? "Click for details" : undefined}
       className={`
-        relative flex flex-col rounded-lg border overflow-hidden min-w-[110px] max-w-[160px]
-        transition-colors duration-300
-        ${STATE_BORDER[state] ?? STATE_BORDER.idle}
+        group relative flex flex-col rounded-lg border overflow-hidden min-w-[110px] max-w-[160px]
+        transition-all duration-200
+        ${selected ? "border-zinc-300 shadow-lg shadow-zinc-950/50 -translate-y-0.5" : STATE_BORDER[state] ?? STATE_BORDER.idle}
         ${STATE_BG[state] ?? STATE_BG.idle}
-        ${onClick ? "cursor-pointer hover:brightness-110" : ""}
+        ${onClick && !selected ? "cursor-pointer hover:border-zinc-500 hover:shadow-lg hover:shadow-zinc-950/50 hover:-translate-y-0.5" : ""}
+        ${onClick && selected ? "cursor-pointer" : ""}
       `}
     >
       <div className={`h-[2px] w-full shrink-0 ${STATE_ACCENT[state] ?? STATE_ACCENT.idle}`} />
+
+      {onClick && (
+        <span
+          aria-hidden
+          className="absolute top-1.5 right-2 flex h-4 w-4 items-center justify-center rounded-full border border-zinc-700 text-[9px] font-semibold leading-none text-zinc-500 transition-colors duration-200 group-hover:border-zinc-400 group-hover:text-zinc-200"
+        >
+          i
+        </span>
+      )}
 
       <div className="px-3 py-2.5 pr-9">
         <span className={`text-xs font-semibold uppercase tracking-wide leading-tight block ${STATE_TEXT[state] ?? STATE_TEXT.idle}`}>
@@ -81,9 +93,9 @@ export function AgentNode({ node, onClick }: Props) {
 
         {/* Always rendered to reserve vertical space — opacity flips so the card doesn't shrink on done */}
         <div className={`flex gap-[3px] mt-2 transition-opacity duration-200 ${isRunning ? "opacity-100" : "opacity-0"}`}>
-          <span className="w-1 h-1 rounded-full bg-blue-400 animate-bounce [animation-delay:0ms]" />
-          <span className="w-1 h-1 rounded-full bg-blue-400 animate-bounce [animation-delay:120ms]" />
-          <span className="w-1 h-1 rounded-full bg-blue-400 animate-bounce [animation-delay:240ms]" />
+          <span className="w-1 h-1 rounded-full bg-zinc-400 animate-bounce [animation-delay:0ms]" />
+          <span className="w-1 h-1 rounded-full bg-zinc-400 animate-bounce [animation-delay:120ms]" />
+          <span className="w-1 h-1 rounded-full bg-zinc-400 animate-bounce [animation-delay:240ms]" />
         </div>
 
         {state === "error" && node.error && (
