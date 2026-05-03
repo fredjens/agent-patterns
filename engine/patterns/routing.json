@@ -1,0 +1,66 @@
+{
+  "id": "routing",
+  "name": "Routing",
+  "category": "Selection",
+  "summary": "Router reads the prompt and picks the best specialist for the job.",
+  "about": "A router analyzes the prompt and selects exactly one specialist from a pool. Only the chosen specialist runs. Contrast with Decomposition (all specialists run) — here selection is the strategy, not aggregation.",
+  "nodes": {
+    "router": {
+      "role": "Router",
+      "description": "Reads the prompt and picks the single best specialist",
+      "system": "You are a router. Read the user's prompt and pick the single most appropriate specialist to handle it. Use the transfer tool to route to the right specialist.",
+      "route_only": true,
+      "routes_to": ["researcher", "writer", "analyst", "coder"],
+      "inputs": {
+        "prompt": { "from": "$input.prompt", "description": "The prompt to route" }
+      }
+    },
+    "researcher": {
+      "role": "Researcher",
+      "description": "Deep-dives into topics requiring investigation and information gathering",
+      "system": "You are a Researcher. Investigate the topic thoroughly, cite key facts, and provide a well-structured research summary.",
+      "inputs": {
+        "prompt": { "from": "$input.prompt", "description": "The research question" }
+      },
+      "output": { "format": "text", "description": "Research summary" }
+    },
+    "writer": {
+      "role": "Writer",
+      "description": "Crafts content requiring narrative, persuasion or creative writing",
+      "system": "You are a Writer. Craft a compelling, well-structured piece that directly addresses the prompt.",
+      "inputs": {
+        "prompt": { "from": "$input.prompt", "description": "The writing brief" }
+      },
+      "output": { "format": "text", "description": "Written piece" }
+    },
+    "analyst": {
+      "role": "Analyst",
+      "description": "Breaks down complex problems requiring structured analysis",
+      "system": "You are an Analyst. Apply structured analytical thinking to the problem. Break it down, weigh trade-offs, and produce a clear recommendation.",
+      "inputs": {
+        "prompt": { "from": "$input.prompt", "description": "The problem to analyze" }
+      },
+      "output": { "format": "text", "description": "Structured analysis with recommendation" }
+    },
+    "coder": {
+      "role": "Coder",
+      "description": "Solves problems requiring code, algorithms or technical implementation",
+      "system": "You are a Coder. Provide a clean, well-explained technical solution with code examples where appropriate.",
+      "inputs": {
+        "prompt": { "from": "$input.prompt", "description": "The technical problem" }
+      },
+      "output": { "format": "text", "description": "Technical solution with code" }
+    }
+  },
+  "execution": {
+    "type": "sequence",
+    "steps": [
+      { "type": "node", "id": "router" },
+      {
+        "type": "branch",
+        "selector": "$router.output.to",
+        "candidates": ["researcher", "writer", "analyst", "coder"]
+      }
+    ]
+  }
+}

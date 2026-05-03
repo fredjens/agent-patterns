@@ -1,0 +1,25 @@
+{
+  "id": "react",
+  "name": "ReAct",
+  "category": "Single-Agent",
+  "summary": "Single agent loops through reason → tool call → observe until it reaches a final answer.",
+  "about": "ReAct (Reasoning + Acting) gives one agent access to tools. Each turn: reason about the problem, call a tool if more information is needed, observe the result, then repeat. The loop ends when the agent can answer without calling any tools. Available tools: calculate (real math) and search (simulated).",
+  "output": "$react_agent.output",
+  "nodes": {
+    "react_agent": {
+      "role": "ReAct Agent",
+      "description": "Thinks, calls tools, observes results, and repeats until it can give a final answer",
+      "system": "You are a ReAct agent. Solve problems step-by-step using tools when needed.\n\nAvailable tools:\n- calculate: evaluate math expressions (e.g. '47.50 * 1.15')\n- search: look up information (simulated in this demo)\n\nAlways reason briefly before calling a tool. When you have enough information to give a complete answer, provide it directly without calling any more tools.",
+      "inputs": {
+        "question": { "from": "$input.prompt", "description": "The question or problem to solve" }
+      },
+      "output": { "format": "text", "description": "Final answer after reasoning and tool use" }
+    }
+  },
+  "execution": {
+    "type": "tool_loop",
+    "agent": "react_agent",
+    "tools": ["calculate", "search"],
+    "max_steps": 8
+  }
+}

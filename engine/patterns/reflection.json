@@ -1,0 +1,50 @@
+{
+  "id": "reflection",
+  "name": "Reflection",
+  "category": "Iteration",
+  "summary": "Single agent generates, critiques itself, and refines — loops until satisfied.",
+  "about": "One agent iterates through Generate → Critique → Refine up to 3 times. The critic explicitly says 'SATISFIED' when quality is good enough, ending the loop early. Demonstrates self-improvement without external feedback.",
+  "output": "$refiner.output",
+  "nodes": {
+    "generator": {
+      "role": "Generator",
+      "description": "Produces a response — uses previous refinement if available",
+      "system": "You are a Generator. Produce a clear, complete response to the prompt. If a previous draft is provided, use it as your starting point and improve it.",
+      "inputs": {
+        "prompt":         { "from": "$input.prompt",    "description": "The original prompt" },
+        "previous_draft": { "from": "$refiner.output",  "description": "Previous refined draft (empty on first iteration)" }
+      },
+      "output": { "format": "text", "description": "Current best response" }
+    },
+    "critic": {
+      "role": "Critic",
+      "description": "Evaluates quality — outputs SATISFIED or specific feedback",
+      "system": "You are a Critic. Evaluate the draft against the original prompt. If the draft is good enough, start your response with the word SATISFIED and briefly explain why. Otherwise list specific, actionable improvements needed.",
+      "inputs": {
+        "prompt": { "from": "$input.prompt",     "description": "The original prompt" },
+        "draft":  { "from": "$generator.output", "description": "The draft to evaluate" }
+      },
+      "output": { "format": "text", "description": "SATISFIED, or specific improvement feedback" }
+    },
+    "refiner": {
+      "role": "Refiner",
+      "description": "Applies the critic's feedback to improve the draft",
+      "system": "You are a Refiner. Improve the draft based on the critic's feedback. If the critic said SATISFIED, return the draft unchanged.",
+      "inputs": {
+        "draft":    { "from": "$generator.output", "description": "The draft to improve" },
+        "feedback": { "from": "$critic.output",    "description": "The critic's feedback" }
+      },
+      "output": { "format": "text", "description": "Improved draft" }
+    }
+  },
+  "execution": {
+    "type": "loop",
+    "max_iterations": 3,
+    "until": { "node": "critic", "output_contains": "SATISFIED" },
+    "steps": [
+      { "type": "node", "id": "generator" },
+      { "type": "node", "id": "critic" },
+      { "type": "node", "id": "refiner" }
+    ]
+  }
+}

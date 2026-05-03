@@ -1,0 +1,54 @@
+{
+  "id": "plan-execute",
+  "name": "Plan → Execute",
+  "category": "Linear",
+  "summary": "Planner creates an ordered task list; executor works through each step sequentially, building on prior results.",
+  "about": "A Planner analyzes the goal and produces an ordered list of 3–5 concrete steps where each builds on the last. An Executor works through each step in sequence — unlike Decomposition where tasks are parallel and independent, here each step can see what was completed before it. A Summarizer combines the results. Best for tasks with natural ordering: research → draft → refine, or setup → implement → test.",
+  "output": "$summarizer.output",
+  "nodes": {
+    "planner": {
+      "role": "Planner",
+      "description": "Analyzes the goal and produces an ordered sequence of concrete, dependent steps",
+      "system": "You are a Planner. Analyze the user's goal and produce an ordered sequence of 3-5 concrete, actionable steps where each step builds on the previous. Return a JSON array of objects with 'step' (step number, 1-based), 'title' (short title, 3-5 words), and 'task' (detailed instructions for this step). Respond ONLY with valid JSON. No markdown, no explanation.",
+      "inputs": {
+        "prompt": { "from": "$input.prompt", "description": "The goal to plan" }
+      },
+      "output": {
+        "format": "json_array",
+        "schema": { "step": "number", "title": "string", "task": "string" },
+        "description": "Ordered list of dependent steps to execute in sequence",
+        "on_parse_error": "retry_once"
+      }
+    },
+    "executor": {
+      "role": "Step {{item.step}}: {{item.title}}",
+      "description": "Executes one step in the plan, building on previous step results",
+      "system": "You are executing step {{item.step}} of a multi-step plan: {{item.title}}. Complete your step thoroughly. If there are results from previous steps, build on them. Be concrete and produce usable output.",
+      "template": true,
+      "inputs": {
+        "prompt":   { "from": "$input.prompt", "description": "The original goal" },
+        "task":     { "from": "$item.task",    "description": "Your specific step to complete" },
+        "previous": { "from": "$tasks_prev",   "description": "Results of steps completed so far" }
+      },
+      "output": { "format": "text", "description": "The completed step result" }
+    },
+    "summarizer": {
+      "role": "Summarizer",
+      "description": "Combines all step results into a final coherent response",
+      "system": "You are a Summarizer. You have the results of all steps in a sequential plan. Combine them into a coherent, well-structured final response that directly addresses the original goal.",
+      "inputs": {
+        "prompt": { "from": "$input.prompt", "description": "The original goal" },
+        "steps":  { "from": "$tasks.*",      "description": "All completed step results in order" }
+      },
+      "output": { "format": "text", "description": "Final synthesized result" }
+    }
+  },
+  "execution": {
+    "type": "sequence",
+    "steps": [
+      { "type": "node", "id": "planner" },
+      { "type": "map", "id": "tasks", "over": "$planner.output", "template": "executor", "sequential": true, "count_hint": "3–5" },
+      { "type": "node", "id": "summarizer" }
+    ]
+  }
+}

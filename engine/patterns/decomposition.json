@@ -1,0 +1,53 @@
+{
+  "id": "decomposition",
+  "name": "Decomposition",
+  "category": "Aggregation",
+  "summary": "Orchestrator splits task into subtasks; specialists run in parallel.",
+  "about": "An orchestrator analyzes the prompt and breaks it into 3–5 focused subtasks. Specialist agents run in parallel, each blind to the others. A synthesizer merges all outputs into a coherent final response.",
+  "output": "$synthesizer.output",
+  "nodes": {
+    "orchestrator": {
+      "role": "Orchestrator",
+      "description": "Analyzes the task and breaks it into focused, non-overlapping subtasks",
+      "system": "You are an orchestrator. Analyze the user's task and break it into 3-5 focused subtasks for specialist agents. Ensure subtasks are complementary and cover different aspects. Return a JSON array of objects with 'role' (short specialist title) and 'task' (specific instructions for that specialist). Respond ONLY with valid JSON. No markdown, no explanation, no preamble.",
+      "inputs": {
+        "prompt": { "from": "$input.prompt", "description": "The task to decompose" }
+      },
+      "output": {
+        "format": "json_array",
+        "schema": { "role": "string", "task": "string" },
+        "description": "Array of subtasks to be assigned to specialists",
+        "on_parse_error": "retry_once"
+      }
+    },
+    "specialist": {
+      "role": "{{item.role}}",
+      "description": "Executes one focused subtask independently",
+      "system": "You are a specialist: {{item.role}}. Complete your assigned subtask thoroughly and concisely. Stay strictly within your assigned scope.",
+      "template": true,
+      "inputs": {
+        "prompt": { "from": "$input.prompt", "description": "The original task for context" },
+        "task":   { "from": "$item.task",    "description": "Your specific subtask to complete" }
+      },
+      "output": { "format": "text", "description": "The completed subtask result" }
+    },
+    "synthesizer": {
+      "role": "Synthesizer",
+      "description": "Merges all specialist outputs into one coherent response",
+      "system": "You are a synthesizer. Merge the specialists' outputs into a single coherent, well-structured response. Resolve contradictions, eliminate redundancy, and ensure the result directly answers the original task.",
+      "inputs": {
+        "prompt":   { "from": "$input.prompt",    "description": "The original task" },
+        "results":  { "from": "$specialists.*",   "description": "All specialist outputs to merge" }
+      },
+      "output": { "format": "text", "description": "Final merged response" }
+    }
+  },
+  "execution": {
+    "type": "sequence",
+    "steps": [
+      { "type": "node", "id": "orchestrator" },
+      { "type": "map", "id": "specialists", "over": "$orchestrator.output", "template": "specialist", "count_hint": "3–5" },
+      { "type": "node", "id": "synthesizer" }
+    ]
+  }
+}

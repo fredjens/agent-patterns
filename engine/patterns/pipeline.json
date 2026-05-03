@@ -1,0 +1,59 @@
+{
+  "id": "pipeline",
+  "name": "Pipeline",
+  "category": "Linear",
+  "summary": "Sequential chain — each agent refines the previous output.",
+  "about": "Four agents in a fixed sequence. Drafter writes a first draft, Critic identifies weaknesses, Refiner incorporates the feedback, Editor polishes the final result. The simplest multi-agent pattern — no fan-out, no routing, no loops.",
+  "output": "$editor.output",
+  "nodes": {
+    "drafter": {
+      "role": "Drafter",
+      "description": "Writes a complete first draft from the user's prompt",
+      "system": "You are the Drafter. Given a prompt, write a clear and complete first draft. Be thorough but concise.",
+      "inputs": {
+        "prompt": { "from": "$input.prompt", "description": "The user's original prompt" }
+      },
+      "output": { "format": "text", "description": "A complete first draft" }
+    },
+    "critic": {
+      "role": "Critic",
+      "description": "Identifies specific weaknesses and improvements in the draft",
+      "system": "You are the Critic. Review the draft and identify specific weaknesses, gaps, or improvements needed. Be constructive and precise.",
+      "inputs": {
+        "prompt": { "from": "$input.prompt", "description": "The original prompt" },
+        "draft":  { "from": "$drafter.output", "description": "The first draft to critique" }
+      },
+      "output": { "format": "text", "description": "A list of specific weaknesses and suggested improvements" }
+    },
+    "refiner": {
+      "role": "Refiner",
+      "description": "Rewrites the draft incorporating the critic's feedback",
+      "system": "You are the Refiner. Rewrite the draft incorporating the critic's feedback. Preserve what works, fix what doesn't.",
+      "inputs": {
+        "prompt":   { "from": "$input.prompt",    "description": "The original prompt" },
+        "draft":    { "from": "$drafter.output",  "description": "The original draft" },
+        "critique": { "from": "$critic.output",   "description": "The critic's feedback" }
+      },
+      "output": { "format": "text", "description": "An improved draft" }
+    },
+    "editor": {
+      "role": "Editor",
+      "description": "Polishes the refined draft for clarity, flow and concision",
+      "system": "You are the Editor. Polish the refined draft for clarity, flow, and concision. Produce the final output.",
+      "inputs": {
+        "prompt":   { "from": "$input.prompt",    "description": "The original prompt" },
+        "refined":  { "from": "$refiner.output",  "description": "The refined draft to polish" }
+      },
+      "output": { "format": "text", "description": "The final polished output" }
+    }
+  },
+  "execution": {
+    "type": "sequence",
+    "steps": [
+      { "type": "node", "id": "drafter" },
+      { "type": "node", "id": "critic" },
+      { "type": "node", "id": "refiner" },
+      { "type": "node", "id": "editor" }
+    ]
+  }
+}

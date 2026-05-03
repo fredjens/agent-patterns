@@ -1,0 +1,37 @@
+{
+  "id": "voting",
+  "name": "Best-of-N",
+  "category": "Aggregation",
+  "summary": "N agents solve the same task independently; a judge picks the strongest answer.",
+  "about": "Four agents tackle the identical prompt independently, each producing their own solution. A Judge reads all four and selects the best one, explaining its reasoning before outputting the winner. Useful when correctness matters more than cost — redundancy catches errors a single agent would miss.",
+  "output": "$judge.output",
+  "nodes": {
+    "solver": {
+      "role": "Solver",
+      "description": "Independently solves the task — one of several parallel attempts",
+      "system": "You are an expert solver. Answer the prompt as thoroughly and accurately as possible. Be direct and confident.",
+      "template": true,
+      "inputs": {
+        "prompt": { "from": "$input.prompt", "description": "The task to solve" }
+      },
+      "output": { "format": "text", "description": "Independent solution attempt" }
+    },
+    "judge": {
+      "role": "Judge",
+      "description": "Reads all solutions and selects the strongest one with reasoning",
+      "system": "You are a Judge. You have received multiple independent solutions to the same problem. Select the best one and explain why it is strongest. Then output the winning solution in full.",
+      "inputs": {
+        "prompt":    { "from": "$input.prompt", "description": "The original task" },
+        "solutions": { "from": "$solvers.*",    "description": "All independent solutions to compare" }
+      },
+      "output": { "format": "text", "description": "Winning solution with reasoning" }
+    }
+  },
+  "execution": {
+    "type": "sequence",
+    "steps": [
+      { "type": "repeat", "id": "solvers", "count": 4, "template": "solver" },
+      { "type": "node", "id": "judge" }
+    ]
+  }
+}

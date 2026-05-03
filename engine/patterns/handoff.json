@@ -1,0 +1,44 @@
+{
+  "id": "handoff",
+  "name": "Handoff",
+  "category": "Dynamic",
+  "summary": "Agents dynamically transfer control based on what the conversation needs.",
+  "about": "A triage agent reads the request and hands off to the most appropriate specialist using a tool call. Each specialist can either answer directly or transfer further. The graph shape emerges at runtime — edges appear as control transfers. Pool declares all possible agents and valid handoff paths upfront.",
+  "output": "$dynamic.output",
+  "execution": {
+    "type": "dynamic",
+    "entry": "triage",
+    "max_steps": 6,
+    "pool": [
+      {
+        "id": "triage",
+        "role": "Triage",
+        "route_only": true,
+        "description": "Reads the request and decides which specialist should handle it",
+        "system": "You are a Triage agent. Read the user's request and use the transfer tool to hand off to the most appropriate specialist.",
+        "can_handoff_to": ["billing", "technical", "general"]
+      },
+      {
+        "id": "billing",
+        "role": "Billing Specialist",
+        "description": "Handles payment, invoice and subscription questions",
+        "system": "You are a Billing Specialist. Answer billing, payment, and subscription questions thoroughly. If the question turns out to be technical rather than billing-related, use the transfer tool to hand off to the technical specialist.",
+        "can_handoff_to": ["technical"]
+      },
+      {
+        "id": "technical",
+        "role": "Technical Specialist",
+        "description": "Handles bugs, integrations and technical implementation questions",
+        "system": "You are a Technical Specialist. Answer technical, integration, and bug questions thoroughly. If the question turns out to be about billing rather than technical, use the transfer tool to hand off to the billing specialist.",
+        "can_handoff_to": ["billing"]
+      },
+      {
+        "id": "general",
+        "role": "General Support",
+        "description": "Handles general questions that don't fit other categories",
+        "system": "You are a General Support agent. Answer the user's question helpfully and thoroughly.",
+        "can_handoff_to": []
+      }
+    ]
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "id": "hitl",
+  "name": "Human-in-the-Loop",
+  "category": "Human-in-the-Loop",
+  "summary": "Agents pause at checkpoints for human review — approve to continue, or reject with feedback.",
+  "about": "A researcher gathers findings, then pauses for your review before a writer continues. The draft pauses again for final approval before an editor polishes it. Approve to proceed (with optional notes that feed into the next agent), or reject to stop the run. Demonstrates how human oversight slots into an automated pipeline.",
+  "output": "$editor.output",
+  "nodes": {
+    "researcher": {
+      "role": "Researcher",
+      "description": "Gathers key facts, context, and angles on the topic",
+      "system": "You are a research assistant. Given a topic or question, produce a thorough set of findings: key facts, relevant context, different angles, and any important nuances. Use clear bullet points. Be concise but complete.",
+      "inputs": {
+        "topic": { "from": "$input.prompt", "description": "Topic to research" }
+      },
+      "output": { "format": "text", "description": "Research findings" }
+    },
+    "checkpoint1": {
+      "role": "Human Review",
+      "description": "Human reviews research quality before writing begins"
+    },
+    "writer": {
+      "role": "Writer",
+      "description": "Writes a draft using the research and any reviewer notes",
+      "system": "You are a professional writer. Using the research findings, write a clear and engaging piece. If reviewer notes are provided, incorporate them. Structure the piece with a natural flow — no need for formal headers unless the content calls for it.",
+      "inputs": {
+        "research": { "from": "$researcher.output", "description": "Research findings" },
+        "reviewer_notes": { "from": "$checkpoint1.output", "description": "Reviewer feedback from checkpoint (may be empty)" }
+      },
+      "output": { "format": "text", "description": "Written draft" }
+    },
+    "checkpoint2": {
+      "role": "Final Approval",
+      "description": "Human reviews the draft before the editor polishes it"
+    },
+    "editor": {
+      "role": "Editor",
+      "description": "Polishes the draft and applies any final reviewer notes",
+      "system": "You are a careful editor. Polish the draft for clarity, flow, and correctness. Apply any feedback from the final reviewer. If no specific changes were requested, make only minimal improvements — do not restructure unless necessary.",
+      "inputs": {
+        "draft": { "from": "$writer.output", "description": "The written draft" },
+        "final_notes": { "from": "$checkpoint2.output", "description": "Final reviewer feedback (may be empty)" }
+      },
+      "output": { "format": "text", "description": "Final polished content" }
+    }
+  },
+  "execution": {
+    "type": "sequence",
+    "steps": [
+      { "type": "node", "id": "researcher" },
+      { "type": "hitl_checkpoint", "id": "checkpoint1", "action": "Review the research findings. Approve to begin writing, or reject with feedback." },
+      { "type": "node", "id": "writer" },
+      { "type": "hitl_checkpoint", "id": "checkpoint2", "action": "Review the draft. Approve to finalize, or reject with feedback." },
+      { "type": "node", "id": "editor" }
+    ]
+  }
+}

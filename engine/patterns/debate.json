@@ -1,0 +1,99 @@
+{
+  "id": "debate",
+  "name": "Debate",
+  "category": "Dynamic",
+  "summary": "Agents argue opposing perspectives across rounds; moderator synthesizes.",
+  "about": "Three debaters (Optimist, Skeptic, Pragmatist) argue different angles in two parallel rounds. Round 1: independent arguments. Round 2: rebuttals after seeing all Round 1 positions. A moderator frames the question and synthesizes the final verdict.",
+  "output": "$moderator-conclude.output",
+  "nodes": {
+    "moderator-frame": {
+      "role": "Moderator",
+      "description": "Frames the topic as a clear debatable proposition",
+      "system": "You are a debate moderator. Reframe the user's topic as a clear, debatable proposition in one sentence.",
+      "inputs": {
+        "prompt": { "from": "$input.prompt", "description": "The topic to frame" }
+      },
+      "output": { "format": "text", "description": "A single debatable proposition" }
+    },
+    "optimist-r1": {
+      "role": "Optimist",
+      "description": "Argues for opportunities and best-case outcomes — Round 1",
+      "system": "You are the Optimist debater. Argue for the opportunities, benefits, and best-case outcomes. Be concrete and persuasive.",
+      "inputs": {
+        "proposition": { "from": "$moderator-frame.output", "description": "The proposition to debate" },
+        "prompt":      { "from": "$input.prompt",           "description": "Original topic for context" }
+      },
+      "output": { "format": "text", "description": "Optimist's Round 1 argument" }
+    },
+    "skeptic-r1": {
+      "role": "Skeptic",
+      "description": "Stress-tests assumptions and argues for caution — Round 1",
+      "system": "You are the Skeptic debater. Stress-test assumptions, identify risks, and argue for caution. Be rigorous and specific.",
+      "inputs": {
+        "proposition": { "from": "$moderator-frame.output", "description": "The proposition to debate" },
+        "prompt":      { "from": "$input.prompt",           "description": "Original topic for context" }
+      },
+      "output": { "format": "text", "description": "Skeptic's Round 1 argument" }
+    },
+    "pragmatist-r1": {
+      "role": "Pragmatist",
+      "description": "Focuses on feasibility and real-world trade-offs — Round 1",
+      "system": "You are the Pragmatist debater. Focus on feasibility, real-world constraints, and practical trade-offs. Be grounded and direct.",
+      "inputs": {
+        "proposition": { "from": "$moderator-frame.output", "description": "The proposition to debate" },
+        "prompt":      { "from": "$input.prompt",           "description": "Original topic for context" }
+      },
+      "output": { "format": "text", "description": "Pragmatist's Round 1 argument" }
+    },
+    "optimist-r2": {
+      "role": "Optimist",
+      "description": "Rebuts other positions and strengthens the optimist case — Round 2",
+      "system": "You are the Optimist debater. You've seen all Round 1 arguments. Strengthen your position and directly address the other arguments.",
+      "inputs": {
+        "proposition": { "from": "$moderator-frame.output", "description": "The proposition" },
+        "round1":      { "from": "$round1.*",               "description": "All Round 1 arguments" }
+      },
+      "output": { "format": "text", "description": "Optimist's Round 2 rebuttal" }
+    },
+    "skeptic-r2": {
+      "role": "Skeptic",
+      "description": "Rebuts other positions and strengthens the skeptic case — Round 2",
+      "system": "You are the Skeptic debater. You've seen all Round 1 arguments. Strengthen your position and directly address the other arguments.",
+      "inputs": {
+        "proposition": { "from": "$moderator-frame.output", "description": "The proposition" },
+        "round1":      { "from": "$round1.*",               "description": "All Round 1 arguments" }
+      },
+      "output": { "format": "text", "description": "Skeptic's Round 2 rebuttal" }
+    },
+    "pragmatist-r2": {
+      "role": "Pragmatist",
+      "description": "Rebuts other positions and strengthens the pragmatist case — Round 2",
+      "system": "You are the Pragmatist debater. You've seen all Round 1 arguments. Strengthen your position and directly address the other arguments.",
+      "inputs": {
+        "proposition": { "from": "$moderator-frame.output", "description": "The proposition" },
+        "round1":      { "from": "$round1.*",               "description": "All Round 1 arguments" }
+      },
+      "output": { "format": "text", "description": "Pragmatist's Round 2 rebuttal" }
+    },
+    "moderator-conclude": {
+      "role": "Moderator",
+      "description": "Synthesizes the debate into key points, disagreements and a final recommendation",
+      "system": "You are a fair debate moderator. Synthesize the debate into: (1) the strongest points from each side, (2) key areas of disagreement, and (3) a balanced conclusion or recommendation.",
+      "inputs": {
+        "proposition": { "from": "$moderator-frame.output", "description": "The proposition debated" },
+        "round1":      { "from": "$round1.*",               "description": "All Round 1 arguments" },
+        "round2":      { "from": "$round2.*",               "description": "All Round 2 rebuttals" }
+      },
+      "output": { "format": "text", "description": "Balanced synthesis with conclusion" }
+    }
+  },
+  "execution": {
+    "type": "sequence",
+    "steps": [
+      { "type": "node", "id": "moderator-frame" },
+      { "type": "parallel", "id": "round1", "nodes": ["optimist-r1", "skeptic-r1", "pragmatist-r1"], "label": "Round 1" },
+      { "type": "parallel", "id": "round2", "nodes": ["optimist-r2", "skeptic-r2", "pragmatist-r2"], "label": "Round 2" },
+      { "type": "node", "id": "moderator-conclude" }
+    ]
+  }
+}
