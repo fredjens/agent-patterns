@@ -1,6 +1,6 @@
 {
   "id": "plan-execute",
-  "name": "Plan → Execute",
+  "name": "Plan & Execute",
   "category": "Linear",
   "summary": "Planner creates an ordered task list; executor works through each step sequentially, building on prior results.",
   "about": "A Planner analyzes the goal and produces an ordered list of 3–5 concrete steps where each builds on the last. An Executor works through each step in sequence — unlike Decomposition where tasks are parallel and independent, here each step can see what was completed before it. A Summarizer combines the results. Best for tasks with natural ordering: research → draft → refine, or setup → implement → test.",

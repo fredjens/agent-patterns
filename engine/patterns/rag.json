@@ -1,0 +1,50 @@
+{
+  "id": "rag",
+  "name": "Memory / RAG",
+  "category": "Augmented",
+  "summary": "Agent retrieves relevant documents from a knowledge base before generating a grounded answer.",
+  "about": "Retrieval-Augmented Generation decouples knowledge from the model weights. Unlike ReAct — where an agent decides opportunistically whether to call a tool — RAG hardwires retrieval into the pipeline: the Retriever always fetches relevant document chunks before the Generator produces a single token. This guarantees grounding in a specific knowledge base, keeps answers traceable to sources, and avoids the model hallucinating facts it was never trained on.",
+  "example_prompts": [
+    "What is our refund policy for annual subscriptions?",
+    "How do I set up SSO with Okta?",
+    "What are the rate limits on the v2 API?",
+    "Which data regions are available for enterprise customers?"
+  ],
+  "output": "$generator.output",
+  "nodes": {
+    "retriever": {
+      "role": "Retriever",
+      "description": "Queries the knowledge base and extracts the most relevant chunks for the question",
+      "system": "You are a Retriever agent. Your only job is to call the retrieve tool with a well-formed query, then summarise the returned chunks into a concise context block the generator can use. Do not answer the user's question yourself — just extract and organise the evidence.",
+      "inputs": {
+        "question": { "from": "$input.prompt", "description": "The user's question" }
+      },
+      "output": { "format": "text", "description": "Summarised retrieved context" }
+    },
+    "generator": {
+      "role": "Generator",
+      "description": "Answers the question using only the retrieved context",
+      "system": "You are a Generator agent. You will receive the user's question and a block of retrieved document chunks. Answer the question using only the provided context — do not use knowledge outside of it. If the context does not contain enough information, say so explicitly rather than guessing. Cite the source labels (e.g. docs/faq.md) where relevant.",
+      "inputs": {
+        "question": { "from": "$input.prompt", "description": "The original user question" },
+        "context": { "from": "$retriever.output", "description": "Retrieved document chunks from the knowledge base" }
+      },
+      "output": { "format": "text", "description": "Grounded answer citing retrieved sources" }
+    }
+  },
+  "execution": {
+    "type": "sequence",
+    "steps": [
+      {
+        "type": "tool_loop",
+        "agent": "retriever",
+        "tools": ["retrieve"],
+        "max_steps": 3
+      },
+      {
+        "type": "node",
+        "id": "generator"
+      }
+    ]
+  }
+}

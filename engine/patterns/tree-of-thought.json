@@ -1,0 +1,54 @@
+{
+  "id": "tree-of-thought",
+  "name": "Tree of Thought",
+  "category": "Exploration",
+  "summary": "Multiple reasoning branches are explored in parallel; the most promising is selected and carried to a final answer.",
+  "about": "Tree of Thought splits reasoning into parallel branches before committing to an answer. Each Explorer develops a distinct line of thinking for the same problem. A Pruner evaluates all branches and selects the one with the strongest reasoning and highest likelihood of success. The Solver then continues from that branch to a complete solution. Unlike Best-of-N (which compares finished answers), ToT prunes mid-reasoning — investing depth only where it is most likely to pay off.",
+  "example_prompts": [
+    "Design a caching strategy for a high-traffic read-heavy API",
+    "How should a 3-person startup allocate a $50k marketing budget?",
+    "What's the best approach to migrating a monolith to microservices?",
+    "Design a fair on-call rotation for a distributed engineering team"
+  ],
+  "output": "$solver.output",
+  "nodes": {
+    "explorer": {
+      "role": "Explorer",
+      "description": "Develops one distinct reasoning branch for the problem",
+      "system": "You are an Explorer developing one reasoning branch for a problem. Approach it from a distinct angle — do not try to cover everything, instead commit to one clear line of thinking and develop it as far as you can. Lay out your reasoning path step by step, note assumptions, and state where your approach is strongest. End with a brief assessment of this branch's promise.",
+      "template": true,
+      "inputs": {
+        "problem": { "from": "$input.prompt", "description": "The problem to explore" }
+      },
+      "output": { "format": "text", "description": "One developed reasoning branch" }
+    },
+    "pruner": {
+      "role": "Pruner",
+      "description": "Evaluates all branches and selects the most promising reasoning path",
+      "system": "You are a Pruner. You have received several independent reasoning branches for the same problem. Evaluate each branch: assess the clarity of its logic, the strength of its assumptions, and how likely it is to lead to a correct and useful solution. Select the single most promising branch. Output your selection criteria briefly, then reproduce the selected branch in full so the Solver can continue from it.",
+      "inputs": {
+        "problem":  { "from": "$input.prompt",  "description": "The original problem" },
+        "branches": { "from": "$branches.*",    "description": "All explored reasoning branches" }
+      },
+      "output": { "format": "text", "description": "Selected branch with evaluation rationale" }
+    },
+    "solver": {
+      "role": "Solver",
+      "description": "Continues from the selected branch to a complete final answer",
+      "system": "You are a Solver. You have been given a selected reasoning branch that has been identified as the most promising approach to the problem. Continue from where it left off and develop it into a complete, actionable answer. Do not restart from scratch — build directly on the selected reasoning.",
+      "inputs": {
+        "problem":         { "from": "$input.prompt",  "description": "The original problem" },
+        "selected_branch": { "from": "$pruner.output", "description": "The most promising reasoning branch to continue from" }
+      },
+      "output": { "format": "text", "description": "Final answer built on the selected branch" }
+    }
+  },
+  "execution": {
+    "type": "sequence",
+    "steps": [
+      { "type": "repeat", "id": "branches", "count": 3, "template": "explorer" },
+      { "type": "node", "id": "pruner" },
+      { "type": "node", "id": "solver" }
+    ]
+  }
+}

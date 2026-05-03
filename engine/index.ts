@@ -12,12 +12,19 @@ import voting from "./patterns/voting.json";
 import handoff from "./patterns/handoff.json";
 import react from "./patterns/react.json";
 import hitl from "./patterns/hitl.json";
+import rag from "./patterns/rag.json";
+import swarm from "./patterns/swarm.json";
+import treeOfThought from "./patterns/tree-of-thought.json";
+import evaluatorOptimizer from "./patterns/evaluator-optimizer.json";
+import humanAsTool from "./patterns/human-as-tool.json";
 
 // JSON imports come in as `unknown`-ish; cast to Flow at the boundary so the
 // rest of the engine works with proper types.
 const flows: Flow[] = [
-  pipeline, decomposition, planExecute, debate, reflection,
-  routing, voting, handoff, react, hitl,
+  pipeline, react, rag, reflection, planExecute,
+  routing, handoff, swarm,
+  decomposition, voting, debate, treeOfThought,
+  evaluatorOptimizer, hitl, humanAsTool,
 ] as unknown as Flow[];
 
 function collectAgentRoles(flow: Flow): string[] {

@@ -64,6 +64,7 @@ interface PendingApproval {
   runId: string;
   agentId: string;
   action: string;
+  mode: "approval" | "question";
 }
 
 interface Props {
@@ -106,6 +107,34 @@ function ApprovalUI({ action, onApprove, onReject }: {
           Reject
         </button>
       </div>
+    </div>
+  );
+}
+
+function QuestionUI({ question, onAnswer }: {
+  question: string;
+  onAnswer?: (answer: string) => void;
+}) {
+  const [answer, setAnswer] = useState("");
+
+  return (
+    <div className="mt-3 space-y-2">
+      <p className="text-xs text-amber-300/80 italic">{question}</p>
+      <textarea
+        className="w-full text-xs bg-zinc-800 rounded px-2 py-1.5 text-zinc-300 resize-none border border-zinc-700 focus:border-zinc-500 outline-none"
+        rows={2}
+        placeholder="Type your answer…"
+        value={answer}
+        onChange={(e) => setAnswer(e.target.value)}
+        autoFocus
+      />
+      <button
+        onClick={() => { if (answer.trim()) onAnswer?.(answer.trim()); }}
+        disabled={!answer.trim()}
+        className="px-3 py-1 text-xs rounded bg-blue-700 hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium transition-colors"
+      >
+        Send
+      </button>
     </div>
   );
 }
@@ -180,7 +209,9 @@ export function AgentOutputLog({ nodes, finalOutput, stats, pendingApproval, onA
           })()}
 
           {node.state === "waiting" && pendingApproval?.agentId === node.id && (
-            <ApprovalUI action={pendingApproval.action} onApprove={onApprove} onReject={onReject} />
+            pendingApproval.mode === "question"
+              ? <QuestionUI question={pendingApproval.action} onAnswer={onApprove} />
+              : <ApprovalUI action={pendingApproval.action} onApprove={onApprove} onReject={onReject} />
           )}
         </div>
       ))}

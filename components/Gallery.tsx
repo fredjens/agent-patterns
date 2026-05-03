@@ -75,7 +75,7 @@ function PatternCard({ pattern, staggerDelay }: { pattern: PatternMeta & { flow:
 }
 
 export function Gallery({ patterns }: Props) {
-  const [activeTags, setActiveTags] = useState<Set<string>>(new Set());
+  const [activeTag, setActiveTag] = useState<string | null>(null);
 
   // Collect all tags actually present, sorted by frequency
   const allTags = useMemo(() => {
@@ -84,17 +84,12 @@ export function Gallery({ patterns }: Props) {
     return Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([t]) => t);
   }, [patterns]);
 
-  const filtered = activeTags.size === 0
+  const filtered = activeTag === null
     ? patterns
-    : patterns.filter((p) => Array.from(activeTags).every((t) => p.tags.includes(t)));
+    : patterns.filter((p) => p.tags.includes(activeTag));
 
-  function toggle(tag: string) {
-    setActiveTags((prev) => {
-      const next = new Set(prev);
-      if (next.has(tag)) next.delete(tag);
-      else next.add(tag);
-      return next;
-    });
+  function select(tag: string) {
+    setActiveTag((prev) => prev === tag ? null : tag);
   }
 
   return (
@@ -102,11 +97,11 @@ export function Gallery({ patterns }: Props) {
       <div className="mb-8 flex flex-wrap items-center gap-2">
         <span className="text-xs uppercase tracking-widest text-zinc-600 mr-1">Filter</span>
         {allTags.map((t) => (
-          <TagChip key={t} tag={t} active={activeTags.has(t)} onClick={() => toggle(t)} />
+          <TagChip key={t} tag={t} active={activeTag === t} onClick={() => select(t)} />
         ))}
-        {activeTags.size > 0 && (
+        {activeTag !== null && (
           <button
-            onClick={() => setActiveTags(new Set())}
+            onClick={() => setActiveTag(null)}
             className="text-[10px] uppercase tracking-widest text-zinc-500 hover:text-zinc-300 ml-1 cursor-pointer"
           >
             Clear

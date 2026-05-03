@@ -1,6 +1,6 @@
 {
   "id": "voting",
-  "name": "Best-of-N",
+  "name": "Voting",
   "category": "Aggregation",
   "summary": "N agents solve the same task independently; a judge picks the strongest answer.",
   "about": "Four agents tackle the identical prompt independently, each producing their own solution. A Judge reads all four and selects the best one, explaining its reasoning before outputting the winner. Useful when correctness matters more than cost — redundancy catches errors a single agent would miss.",

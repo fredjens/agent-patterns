@@ -3,6 +3,7 @@ import { generateText, streamText, tool, stepCountIs } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import { getTools } from "./tools";
+import { makeAskHumanTool } from "./tools/ask-human";
 import { MODEL_ID } from "@/lib/model";
 
 // Model is pinned via the shared MODEL_ID constant so the API endpoint can't be
@@ -38,6 +39,7 @@ export async function streamClaudeReAct({
   onChunk,
   onToolCall,
   onToolResult,
+  onHumanInput,
 }: {
   system: string;
   initialPrompt: string;
@@ -46,14 +48,17 @@ export async function streamClaudeReAct({
   onChunk: (chunk: string) => void;
   onToolCall: (toolName: string, args: unknown) => void;
   onToolResult: (toolName: string, result: string) => void;
+  onHumanInput?: (question: string) => Promise<string>;
 }): Promise<string> {
   let finalText = "";
+
+  const overrides = onHumanInput ? { ask_human: makeAskHumanTool(onHumanInput) } : undefined;
 
   const result = streamText({
     model,
     system,
     messages: [{ role: "user", content: initialPrompt }],
-    tools: getTools(toolNames),
+    tools: getTools(toolNames, overrides),
     stopWhen: stepCountIs(maxSteps),
   });
 

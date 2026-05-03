@@ -10,12 +10,19 @@ import voting from "@/engine/patterns/voting.json";
 import handoff from "@/engine/patterns/handoff.json";
 import react from "@/engine/patterns/react.json";
 import hitl from "@/engine/patterns/hitl.json";
+import rag from "@/engine/patterns/rag.json";
+import swarm from "@/engine/patterns/swarm.json";
+import treeOfThought from "@/engine/patterns/tree-of-thought.json";
+import evaluatorOptimizer from "@/engine/patterns/evaluator-optimizer.json";
+import humanAsTool from "@/engine/patterns/human-as-tool.json";
 
 // JSON imports come in as inferred types from the .json files; cast at the
 // boundary so the rest of this module works with the proper Flow type.
 const flows: Flow[] = [
-  pipeline, decomposition, planExecute, debate, reflection,
-  routing, voting, handoff, react, hitl,
+  pipeline, react, rag, reflection, planExecute,
+  routing, handoff, swarm,
+  decomposition, voting, debate, treeOfThought,
+  evaluatorOptimizer, hitl, humanAsTool,
 ] as unknown as Flow[];
 
 // Walk the execution tree and any node defs to derive a flat set of tags.
@@ -50,12 +57,10 @@ function deriveTags(flow: Flow): string[] {
           tags.add("parallel");
           hasConcurrency = true;
         }
-        if (step.count_hint) tags.add("variable-count");
         break;
       case "repeat":
         tags.add("parallel");
         hasConcurrency = true;
-        if (step.count) tags.add("fixed-count");
         break;
       case "branch":
         tags.add("branching");

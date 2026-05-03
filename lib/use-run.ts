@@ -7,6 +7,7 @@ interface PendingApproval {
   runId: string;
   agentId: string;
   action: string;
+  mode: "approval" | "question";
 }
 
 interface RunState {
@@ -30,7 +31,7 @@ type Action =
   | { type: "agent_tool_call"; agentId: string; to: string; reason?: string }
   | { type: "agent_tool_result"; agentId: string; toolName: string; result: string }
   | { type: "agent_waiting"; agentId: string }
-  | { type: "approval_required"; runId: string; agentId: string; action: string }
+  | { type: "approval_required"; runId: string; agentId: string; action: string; mode: "approval" | "question" }
   | { type: "approval_received"; approved: boolean; feedback?: string }
   | { type: "phase_change"; phase: string }
   | { type: "complete"; finalOutput: string; stats: RunStats }
@@ -91,7 +92,7 @@ function reducer(state: RunState, action: Action): RunState {
     case "agent_waiting":
       return { ...state, nodes: updateNode(state.nodes, action.agentId, { state: "waiting" }) };
     case "approval_required":
-      return { ...state, pendingApproval: { runId: action.runId, agentId: action.agentId, action: action.action } };
+      return { ...state, pendingApproval: { runId: action.runId, agentId: action.agentId, action: action.action, mode: action.mode } };
     case "approval_received":
       return { ...state, pendingApproval: null };
     case "phase_change":
@@ -204,7 +205,7 @@ export function useRun() {
           dispatch({ type: "agent_waiting", agentId: event.agentId });
           break;
         case "human_approval_required":
-          dispatch({ type: "approval_required", runId: event.runId, agentId: event.agentId, action: event.action });
+          dispatch({ type: "approval_required", runId: event.runId, agentId: event.agentId, action: event.action, mode: event.mode ?? "approval" });
           break;
         case "human_approval_received":
           dispatch({ type: "approval_received", approved: event.approved, feedback: event.feedback });

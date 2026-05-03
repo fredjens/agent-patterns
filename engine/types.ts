@@ -30,7 +30,7 @@ export type RunEvent =
   | ({ type: "agent_tool_call"; agentId: string } & ToolCall)
   | { type: "agent_tool_result"; agentId: string; toolName: string; result: string }
   | { type: "hitl_waiting"; agentId: string }
-  | { type: "human_approval_required"; agentId: string; action: string; runId: string }
+  | { type: "human_approval_required"; agentId: string; action: string; runId: string; mode?: "approval" | "question" }
   | { type: "human_approval_received"; approved: boolean; feedback?: string }
   | { type: "phase_change"; phase: string; description: string }
   | { type: "run_complete"; finalOutput: string; stats: RunStats }
@@ -60,7 +60,7 @@ export interface PatternMeta {
 }
 
 export interface RunOptions {
-  awaitApproval?: (action: string, agentId: string) => Promise<string>;
+  awaitApproval?: (action: string, agentId: string, mode?: "approval" | "question") => Promise<string>;
 }
 
 export interface PatternDefinition extends PatternMeta {

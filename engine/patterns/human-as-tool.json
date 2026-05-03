@@ -1,0 +1,31 @@
+{
+  "id": "human-as-tool",
+  "name": "Human as Tool",
+  "category": "Human-in-the-Loop",
+  "summary": "Agent calls a human for clarification on-demand — not at fixed checkpoints, but whenever it decides human input is needed.",
+  "about": "Unlike Human-in-the-Loop — where the pipeline pauses at predetermined checkpoints — here the agent itself decides when to involve a human. It reasons through the task and, when it encounters ambiguity it cannot resolve, calls ask_human as it would any other tool. This makes human involvement proportional to uncertainty: straightforward tasks complete without interruption, while complex or ambiguous ones surface the right questions at the right moment.",
+  "example_prompts": [
+    "Help me decide between AWS and GCP for our new data platform",
+    "Should we hire a contractor or a full-time engineer for this project?",
+    "Help me prioritize these three features for our next sprint: SSO, audit logs, and bulk import",
+    "Review our current pricing tiers and suggest adjustments"
+  ],
+  "output": "$advisor.output",
+  "nodes": {
+    "advisor": {
+      "role": "Advisor",
+      "description": "Reasons through the task and asks the human when it needs input only they can provide",
+      "system": "You are an Advisor helping the user work through a complex decision or task. Reason carefully through the problem. Use the ask_human tool when you genuinely need information only the human can provide — their preferences, constraints, priorities, or context. Do not ask for things you can work out yourself. Ask one focused question at a time. Once you have enough information, deliver a clear, concrete recommendation.",
+      "inputs": {
+        "task": { "from": "$input.prompt", "description": "The decision or task to work through" }
+      },
+      "output": { "format": "text", "description": "Final recommendation" }
+    }
+  },
+  "execution": {
+    "type": "tool_loop",
+    "agent": "advisor",
+    "tools": ["ask_human", "search"],
+    "max_steps": 8
+  }
+}

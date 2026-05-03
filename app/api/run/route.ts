@@ -43,10 +43,10 @@ export async function POST(req: NextRequest) {
 
       try {
         const runId = crypto.randomUUID();
-        const awaitApproval = (action: string, agentId: string): Promise<string> =>
+        const awaitApproval = (action: string, agentId: string, mode?: "approval" | "question"): Promise<string> =>
           new Promise((resolve, reject) => {
             pendingApprovals.set(runId, { resolve, reject });
-            emit({ type: "human_approval_required", agentId, action, runId });
+            emit({ type: "human_approval_required", agentId, action, runId, mode });
           });
 
         await pattern.run(prompt, emit, { awaitApproval });

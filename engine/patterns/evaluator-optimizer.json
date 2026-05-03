@@ -1,0 +1,61 @@
+{
+  "id": "evaluator-optimizer",
+  "name": "Evaluator-Optimizer",
+  "category": "Iterative",
+  "summary": "A separate Evaluator scores each draft and feeds back to an Optimizer until the output meets quality criteria.",
+  "about": "Unlike Reflection — where one agent critiques its own output — Evaluator-Optimizer uses two distinct agents with different roles. The Generator produces an initial draft. Then a loop begins: the Optimizer refines the current draft, and the Evaluator scores it against explicit criteria. If the Evaluator approves, the loop exits early. Otherwise it provides structured feedback and the cycle repeats. The separation of concerns means the Evaluator can be strict and objective without the self-serving bias of self-critique.",
+  "example_prompts": [
+    "Write a technical blog post on why Postgres is often the right default database",
+    "Draft a job description for a senior backend engineer at a B2B SaaS startup",
+    "Write a product announcement email for a new AI-powered search feature",
+    "Create a rubric for evaluating pull requests submitted by junior developers"
+  ],
+  "output": "$evaluator.output",
+  "nodes": {
+    "generator": {
+      "role": "Generator",
+      "description": "Produces the initial draft to kick off the optimization loop",
+      "system": "You are a Generator. Produce a strong first draft in response to the task. Be thorough — this is the baseline the Optimizer and Evaluator will work from.",
+      "inputs": {
+        "task": { "from": "$input.prompt", "description": "The task to complete" }
+      },
+      "output": { "format": "text", "description": "Initial draft" }
+    },
+    "optimizer": {
+      "role": "Optimizer",
+      "description": "Refines the current draft using evaluator feedback, or improves it on first pass",
+      "system": "You are an Optimizer. You will receive a task, the current draft, and optionally feedback from an Evaluator. If feedback is present, address every point specifically — do not just acknowledge it, fix it. If no feedback is present yet, improve the draft based on your own judgment: tighten the structure, strengthen the argument, and improve clarity. Output the improved draft in full.",
+      "inputs": {
+        "task":     { "from": "$input.prompt",    "description": "The original task" },
+        "draft":    { "from": "$generator.output", "description": "The current draft to improve" },
+        "feedback": { "from": "$evaluator.output", "description": "Evaluator feedback from the previous round (if any)" }
+      },
+      "output": { "format": "text", "description": "Improved draft" }
+    },
+    "evaluator": {
+      "role": "Evaluator",
+      "description": "Scores the optimized draft and either approves it or returns structured feedback",
+      "system": "You are an Evaluator. Score the draft against three criteria: (1) completeness — does it fully address the task? (2) quality — is it clear, well-structured, and compelling? (3) correctness — are all claims accurate and well-supported?\n\nIf all three criteria are met, begin your response with 'APPROVED:' and output the final approved draft in full.\n\nIf improvements are still needed, begin with 'NEEDS_WORK:' and list specific, actionable feedback for each criterion that falls short. Be precise — vague feedback wastes a loop iteration.",
+      "inputs": {
+        "task":  { "from": "$input.prompt",     "description": "The original task" },
+        "draft": { "from": "$optimizer.output", "description": "The optimized draft to evaluate" }
+      },
+      "output": { "format": "text", "description": "APPROVED: <final draft> or NEEDS_WORK: <feedback>" }
+    }
+  },
+  "execution": {
+    "type": "sequence",
+    "steps": [
+      { "type": "node", "id": "generator" },
+      {
+        "type": "loop",
+        "max_iterations": 3,
+        "until": { "node": "evaluator", "output_contains": "APPROVED" },
+        "steps": [
+          { "type": "node", "id": "optimizer" },
+          { "type": "node", "id": "evaluator" }
+        ]
+      }
+    ]
+  }
+}

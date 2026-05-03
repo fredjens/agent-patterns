@@ -90,6 +90,16 @@ async function executeStep(step: Step, flow: Flow, context: Context, emit: Event
       const start = Date.now();
       const inputs = resolveInputs(node.inputs, context);
       const userContent = buildUserContent(inputs);
+
+      const onHumanInput = options?.awaitApproval
+        ? async (question: string) => {
+            emit({ type: "hitl_waiting", agentId: id });
+            const response = await options.awaitApproval!(question, id, "question");
+            emit({ type: "human_approval_received", approved: true, feedback: response });
+            return response;
+          }
+        : undefined;
+
       const finalOutput = await streamClaudeReAct({
         system: node.system,
         initialPrompt: userContent,
@@ -100,6 +110,7 @@ async function executeStep(step: Step, flow: Flow, context: Context, emit: Event
           emit({ type: "agent_tool_call", agentId: id, to: toolName, reason: JSON.stringify(args) }),
         onToolResult: (toolName, result) =>
           emit({ type: "agent_tool_result", agentId: id, toolName, result }),
+        onHumanInput,
       });
       context[id] = { output: finalOutput };
       emit({ type: "agent_complete", agentId: id, tokens: 0, durationMs: Date.now() - start });
@@ -117,7 +128,7 @@ async function executeStep(step: Step, flow: Flow, context: Context, emit: Event
       if (options?.awaitApproval) {
         emit({ type: "hitl_waiting", agentId: id });
         try {
-          const feedback = await options.awaitApproval(action, id);
+          const feedback = await options.awaitApproval(action, id, "approval");
           context[id] = { output: feedback || "Approved" };
           emit({ type: "human_approval_received", approved: true, feedback });
           emit({ type: "agent_complete", agentId: id, tokens: 0, durationMs: Date.now() - start });
