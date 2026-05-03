@@ -15,7 +15,7 @@
     "retriever": {
       "role": "Retriever",
       "description": "Queries the knowledge base and extracts the most relevant chunks for the question",
-      "system": "You are a Retriever agent. Your only job is to call the retrieve tool with a well-formed query, then summarise the returned chunks into a concise context block the generator can use. Do not answer the user's question yourself — just extract and organise the evidence.",
+      "system": "You are a Retriever agent. Call the retrieve tool with a focused query, then output the raw retrieved chunks exactly as returned — do not summarise, reformat, or add commentary. The generator will synthesise them. Stop after one retrieve call.",
       "inputs": {
         "question": { "from": "$input.prompt", "description": "The user's question" }
       },

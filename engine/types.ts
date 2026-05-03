@@ -1,5 +1,10 @@
 export type AgentState = "idle" | "active" | "streaming" | "done" | "error" | "waiting";
 
+export type NodeEvent =
+  | { type: "text"; content: string }
+  | { type: "tool_call"; name: string; args: string }
+  | { type: "tool_result"; name: string; result: string };
+
 // Result of an agent's transfer/handoff/route decision. Reused on AgentNodeState,
 // in RunEvent's agent_tool_call payload, and as the return shape of callClaudeWithTools.
 export interface ToolCall {
@@ -18,6 +23,7 @@ export interface AgentNodeState {
   parentId?: string;
   error?: string;
   toolCall?: ToolCall;
+  events: NodeEvent[];
 }
 
 export type RunEvent =

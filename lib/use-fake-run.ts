@@ -49,7 +49,7 @@ function sleep(ms: number, cancelled: () => boolean): Promise<void> {
 function spawnNode(setNodes: WalkerOptions["setNodes"], id: string, role: string) {
   setNodes((prev) => {
     if (prev.some((n) => n.id === id)) return prev;
-    return [...prev, { id, role, state: "idle", output: "", tokens: 0, durationMs: 0 }];
+    return [...prev, { id, role, state: "idle", output: "", tokens: 0, durationMs: 0, events: [] }];
   });
 }
 

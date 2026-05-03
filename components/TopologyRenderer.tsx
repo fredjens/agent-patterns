@@ -11,7 +11,7 @@ interface Props {
 }
 
 function ghost(id: string, def: { role?: string } | undefined): AgentNodeState {
-  return { id, role: def?.role ?? id, state: "idle", output: "", tokens: 0, durationMs: 0 };
+  return { id, role: def?.role ?? id, state: "idle", output: "", tokens: 0, durationMs: 0, events: [] };
 }
 
 function getNode(id: string, def: NodeDef | undefined, nodes: AgentNodeState[]): AgentNodeState {

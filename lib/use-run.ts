@@ -1,7 +1,7 @@
 "use client";
 
 import { useReducer, useCallback, useRef } from "react";
-import { AgentNodeState, RunEvent, RunStats } from "@/engine/types";
+import { AgentNodeState, NodeEvent, RunEvent, RunStats } from "@/engine/types";
 
 interface PendingApproval {
   runId: string;
@@ -53,7 +53,7 @@ function reducer(state: RunState, action: Action): RunState {
         ...state,
         nodes: [
           ...state.nodes,
-          { id: action.agentId, role: action.role, state: "idle", output: "", tokens: 0, durationMs: 0, parentId: action.parentId },
+          { id: action.agentId, role: action.role, state: "idle", output: "", tokens: 0, durationMs: 0, parentId: action.parentId, events: [] },
         ],
       };
     case "agent_start":
@@ -61,9 +61,17 @@ function reducer(state: RunState, action: Action): RunState {
     case "agent_chunk":
       return {
         ...state,
-        nodes: state.nodes.map((n) =>
-          n.id === action.agentId ? { ...n, state: "streaming", output: n.output + action.chunk } : n
-        ),
+        nodes: state.nodes.map((n) => {
+          if (n.id !== action.agentId) return n;
+          const events = [...n.events];
+          const last = events[events.length - 1];
+          if (last?.type === "text") {
+            events[events.length - 1] = { type: "text", content: last.content + action.chunk };
+          } else {
+            events.push({ type: "text", content: action.chunk });
+          }
+          return { ...n, state: "streaming", output: n.output + action.chunk, events };
+        }),
       };
     case "agent_complete":
       return {
@@ -74,17 +82,26 @@ function reducer(state: RunState, action: Action): RunState {
       return { ...state, nodes: updateNode(state.nodes, action.agentId, { state: "error", error: action.error }) };
     case "agent_tool_call": {
       const toolId = `tool:${action.to}`;
-      const withAgentUpdate = updateNode(state.nodes, action.agentId, { toolCall: { to: action.to, reason: action.reason } });
+      const withAgentUpdate = state.nodes.map((n) => {
+        if (n.id !== action.agentId) return n;
+        return {
+          ...n,
+          toolCall: { to: action.to, reason: action.reason },
+          events: [...n.events, { type: "tool_call" as const, name: action.to, args: action.reason ?? "" }],
+        };
+      });
       const nodes = withAgentUpdate.some((n) => n.id === toolId)
         ? updateNode(withAgentUpdate, toolId, { state: "active" })
-        : [...withAgentUpdate, { id: toolId, role: action.to, state: "active" as const, output: "", tokens: 0, durationMs: 0 }];
+        : [...withAgentUpdate, { id: toolId, role: action.to, state: "active" as const, output: "", tokens: 0, durationMs: 0, events: [] as NodeEvent[] }];
       return { ...state, nodes };
     }
     case "agent_tool_result":
       return {
         ...state,
         nodes: state.nodes.map((n) => {
-          if (n.id === action.agentId) return { ...n, output: n.output + `\n\n[${action.toolName} → ${action.result}]\n\n` };
+          if (n.id === action.agentId) {
+            return { ...n, events: [...n.events, { type: "tool_result" as const, name: action.toolName, result: action.result }] };
+          }
           if (n.id === `tool:${action.toolName}`) return { ...n, state: "done" as const };
           return n;
         }),

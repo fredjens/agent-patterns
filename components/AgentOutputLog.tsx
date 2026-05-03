@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown, { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { AgentNodeState, RunStats } from "@/engine/types";
+import { AgentNodeState, NodeEvent, RunStats } from "@/engine/types";
 
 const mdComponents: Components = {
   p:          ({ children }) => <p className="mb-2 last:mb-0 leading-relaxed">{children}</p>,
@@ -179,9 +179,49 @@ export function AgentOutputLog({ nodes, finalOutput, stats, pendingApproval, onA
             )}
           </div>
 
-          {node.output && node.state !== "waiting" && <Markdown>{node.output}</Markdown>}
+          {node.events.length > 0 ? (
+            node.state !== "waiting" && node.events.map((event: NodeEvent, i: number) => {
+              if (event.type === "text") {
+                return event.content ? <Markdown key={i}>{event.content}</Markdown> : null;
+              }
+              if (event.type === "tool_call") {
+                const isHandoff = nodes.some((n) => n.id === event.name);
+                if (isHandoff) {
+                  return (
+                    <div key={i} className="mt-2 flex items-start gap-1.5 text-xs text-zinc-500">
+                      <span>↪</span>
+                      <span>
+                        transferred to <span className="text-zinc-300">{nodes.find((n) => n.id === event.name)?.role ?? event.name}</span>
+                        {event.args && <span className="text-zinc-600"> — {event.args}</span>}
+                      </span>
+                    </div>
+                  );
+                }
+                let argsDisplay = event.args;
+                try { argsDisplay = JSON.stringify(JSON.parse(event.args), null, 0); } catch { /* use raw */ }
+                return (
+                  <div key={i} className="mt-2 flex items-start gap-1.5 text-xs text-zinc-500 font-mono">
+                    <span className="text-zinc-600">⚙</span>
+                    <span className="text-zinc-400">{event.name}</span>
+                    <span className="text-zinc-600">({argsDisplay})</span>
+                  </div>
+                );
+              }
+              if (event.type === "tool_result") {
+                const preview = event.result.length > 180 ? event.result.slice(0, 180) + "…" : event.result;
+                return (
+                  <div key={i} className="mt-1 ml-4 text-[11px] text-zinc-600 font-mono leading-relaxed whitespace-pre-wrap">
+                    {preview}
+                  </div>
+                );
+              }
+              return null;
+            })
+          ) : (
+            node.output && node.state !== "waiting" && <Markdown>{node.output}</Markdown>
+          )}
 
-          {node.toolCall && (() => {
+          {node.events.length === 0 && node.toolCall && (() => {
             const isAgentHandoff = nodes.some((n) => n.id === node.toolCall!.to);
             if (isAgentHandoff) {
               return (
@@ -194,7 +234,6 @@ export function AgentOutputLog({ nodes, finalOutput, stats, pendingApproval, onA
                 </div>
               );
             }
-            // ReAct tool call
             let argsDisplay = node.toolCall.reason ?? "";
             try { argsDisplay = JSON.stringify(JSON.parse(argsDisplay), null, 0); } catch { /* use raw */ }
             return (
