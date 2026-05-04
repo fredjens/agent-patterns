@@ -172,6 +172,35 @@ function RenderStep({ step, flow, nodes, onNodeClick, selectedId }: { step: Step
 
     case "dynamic": {
       const pool = step.pool;
+      const renderPoolNode = (def: typeof pool[number]) => {
+        const n = nodes.find((ln) => ln.id === def.id) ?? ghost(def.id, def);
+        const targets = def.can_handoff_to ?? [];
+        const targetRoles = targets.map((tid) => pool.find((p) => p.id === tid)?.role ?? tid);
+        return (
+          <div key={def.id} className="flex flex-col items-center gap-1">
+            <AgentNode node={n} onClick={click(onNodeClick, def.id)} selected={selectedId === def.id} />
+            {targetRoles.length > 0 && (
+              <div className="flex flex-wrap justify-center gap-1 mt-1">
+                {targetRoles.map((r) => (
+                  <span key={r} className="inline-flex items-center gap-1 rounded-full border border-zinc-700/60 bg-zinc-800/50 px-2 py-0.5 text-[10px] uppercase tracking-widest text-zinc-500">
+                    <span className="text-zinc-600">→</span>{r}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      };
+
+      const isPeerPool = pool.some((n) => n.id !== step.entry && (n.can_handoff_to ?? []).includes(step.entry));
+      if (isPeerPool) {
+        return (
+          <GroupBox label="peer pool · agents may re-route">
+            <Row>{pool.map(renderPoolNode)}</Row>
+          </GroupBox>
+        );
+      }
+
       const entryDef = pool.find((n) => n.id === step.entry);
       const specialists = pool.filter((n) => n.id !== step.entry);
       const entryNode = entryDef ? (nodes.find((ln) => ln.id === step.entry) ?? ghost(step.entry, entryDef)) : null;
@@ -180,27 +209,7 @@ function RenderStep({ step, flow, nodes, onNodeClick, selectedId }: { step: Step
         <Seq>
           {entryNode && <AgentNode node={entryNode} onClick={click(onNodeClick, step.entry)} selected={selectedId === step.entry} />}
           <GroupBox label={anyCanReroute ? "pool · agents may re-route" : "pool"}>
-            <Row>
-              {specialists.map((def) => {
-                const n = nodes.find((ln) => ln.id === def.id) ?? ghost(def.id, def);
-                const targets = def.can_handoff_to ?? [];
-                const targetRoles = targets.map((tid) => pool.find((p) => p.id === tid)?.role ?? tid);
-                return (
-                  <div key={def.id} className="flex flex-col items-center gap-1">
-                    <AgentNode node={n} onClick={click(onNodeClick, def.id)} selected={selectedId === def.id} />
-                    {targetRoles.length > 0 && (
-                      <div className="flex flex-wrap justify-center gap-1 mt-1">
-                        {targetRoles.map((r) => (
-                          <span key={r} className="inline-flex items-center gap-1 rounded-full border border-zinc-700/60 bg-zinc-800/50 px-2 py-0.5 text-[10px] uppercase tracking-widest text-zinc-500">
-                            <span className="text-zinc-600">→</span>{r}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </Row>
+            <Row>{specialists.map(renderPoolNode)}</Row>
           </GroupBox>
         </Seq>
       );

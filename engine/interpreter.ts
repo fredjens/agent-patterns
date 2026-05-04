@@ -222,6 +222,11 @@ async function executeStep(step: Step, flow: Flow, context: Context, emit: Event
         if (!node) break;
         await executeNode(node, currentId, context, emit);
         const output = outputOf(context[currentId]);
+        // Expose prior agent's output to the next agent as $prev.output.
+        // For handoffs, use the transfer reason so the next agent gets a useful brief.
+        context["prev"] = {
+          output: isToolCall(output) ? (output.reason ?? "") : (typeof output === "string" ? output : ""),
+        };
         if (isToolCall(output) && pool[output.to]) {
           currentId = output.to;
           continue;
@@ -281,6 +286,7 @@ async function executeNode(
       });
       if (result.toolCall) {
         emit({ type: "agent_tool_call", agentId: id, to: result.toolCall.to, reason: result.toolCall.reason });
+        emit({ type: "agent_tool_result", agentId: id, toolName: result.toolCall.to, result: "transferring" });
         output = result.toolCall;
       } else {
         output = result.text;

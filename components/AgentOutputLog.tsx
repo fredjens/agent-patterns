@@ -142,7 +142,9 @@ function QuestionUI({ question, onAnswer }: {
 export function AgentOutputLog({ nodes, finalOutput, stats, pendingApproval, onApprove, onReject }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const visible = nodes.filter(
-    (n) => n.output || n.toolCall || n.state === "active" || n.state === "streaming" || n.state === "waiting"
+    (n) =>
+      !n.id.startsWith("tool:") &&
+      (n.output || n.toolCall || n.state === "active" || n.state === "streaming" || n.state === "waiting")
   );
 
   useEffect(() => {
@@ -180,7 +182,7 @@ export function AgentOutputLog({ nodes, finalOutput, stats, pendingApproval, onA
           </div>
 
           {node.events.length > 0 ? (
-            node.state !== "waiting" && node.events.map((event: NodeEvent, i: number) => {
+            node.events.map((event: NodeEvent, i: number) => {
               if (event.type === "text") {
                 return event.content ? <Markdown key={i}>{event.content}</Markdown> : null;
               }
