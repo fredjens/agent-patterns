@@ -94,15 +94,15 @@ export function Gallery({ patterns }: Props) {
 
   return (
     <div>
-      <div className="mb-8 flex flex-wrap items-center gap-2">
-        <span className="text-xs uppercase tracking-widest text-zinc-600 mr-1">Filter</span>
+      <div className="mb-6 -mx-4 px-4 md:mx-0 md:px-0 flex items-center gap-2 overflow-x-auto scrollbar-none">
+        <span className="text-xs uppercase tracking-widest text-zinc-600 shrink-0">Filter</span>
         {allTags.map((t) => (
           <TagChip key={t} tag={t} active={activeTag === t} onClick={() => select(t)} />
         ))}
         {activeTag !== null && (
           <button
             onClick={() => setActiveTag(null)}
-            className="text-[10px] uppercase tracking-widest text-zinc-500 hover:text-zinc-300 ml-1 cursor-pointer"
+            className="text-[10px] uppercase tracking-widest text-zinc-500 hover:text-zinc-300 shrink-0 cursor-pointer"
           >
             Clear
           </button>
@@ -111,7 +111,7 @@ export function Gallery({ patterns }: Props) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {filtered.map((p, i) => (
-          <PatternCard key={p.id} pattern={p} staggerDelay={i * 350} />
+          <PatternCard key={p.id} pattern={p} staggerDelay={i * 175} />
         ))}
       </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { AgentNodeState, Flow, Step } from "@/engine/types";
 
 // Fake walker that drives a TopologyRenderer through idle → active → done states
@@ -220,24 +220,23 @@ async function runStep(step: Step, flow: Flow, opts: WalkerOptions) {
 export function useFakeRun(flow: Flow | undefined, options: { startDelay?: number; enabled?: boolean } = {}) {
   const { startDelay = 0, enabled = true } = options;
   const [nodes, setNodes] = useState<AgentNodeState[]>([]);
-  const cancelledRef = useRef(false);
 
   useEffect(() => {
     if (!enabled || !flow) return;
-    cancelledRef.current = false;
+    let cancelled = false;
 
     const opts: WalkerOptions = {
       flow,
       setNodes: (updater) => {
-        if (cancelledRef.current) return;
+        if (cancelled) return;
         setNodes(updater);
       },
-      cancelled: () => cancelledRef.current,
+      cancelled: () => cancelled,
     };
 
     (async () => {
       await sleep(startDelay, opts.cancelled);
-      while (!cancelledRef.current) {
+      while (!cancelled) {
         opts.setNodes(() => []);
         await sleep(120, opts.cancelled);
         await runStep(flow.execution, flow, opts);
@@ -246,7 +245,7 @@ export function useFakeRun(flow: Flow | undefined, options: { startDelay?: numbe
     })();
 
     return () => {
-      cancelledRef.current = true;
+      cancelled = true;
     };
   }, [flow, enabled, startDelay]);
 

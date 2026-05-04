@@ -5,3 +5,10 @@ body {
   color: #f4f4f5;
   font-family: ui-sans-serif, system-ui, sans-serif;
 }
+
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
