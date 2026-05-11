@@ -51,27 +51,7 @@ export default function PatternPage({ params }: { params: Promise<{ id: string }
       <AppHeader>
         <span className="text-zinc-700 select-none">/</span>
         <span className="text-sm font-semibold text-zinc-100 truncate">{pattern.name}</span>
-        {/* Tabs: mobile only — desktop shows both panels side-by-side */}
-        <div className="ml-auto flex gap-1 shrink-0 md:hidden">
-          {(["flow", "run"] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`px-3 py-1 rounded-md text-xs font-medium capitalize tracking-wide transition-colors ${
-                tab === t ? "bg-zinc-800 text-zinc-100" : "text-zinc-500 hover:text-zinc-300"
-              }`}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
       </AppHeader>
-
-      {state.error && (
-        <div className="mx-4 mt-3 shrink-0 rounded-lg border border-red-800 bg-red-950/50 px-4 py-3 text-sm text-red-300">
-          {state.error}
-        </div>
-      )}
 
       <div className="flex flex-col md:flex-row flex-1 min-h-0">
         {/* Topology panel — always visible on desktop, tab-controlled on mobile */}
@@ -91,6 +71,11 @@ export default function PatternPage({ params }: { params: Promise<{ id: string }
 
         {/* Output panel — always visible on desktop, tab-controlled on mobile */}
         <div className={`flex flex-col md:w-[55%] shrink-0 min-h-0 ${tab === "run" ? "flex-1" : "hidden md:flex"}`}>
+          {state.error && (
+            <div className="mx-3 mt-3 shrink-0 rounded-lg border border-red-800 bg-red-950/50 px-4 py-3 text-sm text-red-300">
+              {state.error}
+            </div>
+          )}
           <div className="flex-1 overflow-y-auto">
             <AgentOutputLog
               nodes={state.nodes}
@@ -111,6 +96,21 @@ export default function PatternPage({ params }: { params: Promise<{ id: string }
           />
         </div>
       </div>
+
+      {/* Bottom tab bar — mobile only */}
+      <nav className="md:hidden shrink-0 flex border-t border-zinc-800 bg-zinc-950">
+        {(["flow", "run"] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`flex-1 py-3 text-sm font-medium capitalize tracking-wide transition-colors ${
+              tab === t ? "text-zinc-100 border-t-2 border-zinc-100 -mt-px" : "text-zinc-500"
+            }`}
+          >
+            {t}
+          </button>
+        ))}
+      </nav>
     </div>
   );
 }

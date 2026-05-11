@@ -14,7 +14,7 @@ export default function GalleryPage() {
 
       <main className="px-4 md:px-12 lg:px-16 py-8">
         <div className="mb-7 max-w-3xl">
-          <p className="text-2xl font-semibold text-zinc-100 leading-snug mb-2">Runnable patterns for building with agents</p>
+          <p className="text-2xl font-semibold text-zinc-100 leading-snug mb-2">Patterns for agentic workflows</p>
           <p className="text-sm text-zinc-500 leading-relaxed">
             Open one to inspect its topology, send it a prompt, and watch the agents work.
           </p>

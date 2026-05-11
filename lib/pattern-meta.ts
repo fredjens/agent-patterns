@@ -19,10 +19,10 @@ import humanAsTool from "@/engine/patterns/human-as-tool.json";
 // JSON imports come in as inferred types from the .json files; cast at the
 // boundary so the rest of this module works with the proper Flow type.
 const flows: Flow[] = [
-  pipeline, react, rag, reflection, planExecute,
-  routing, handoff, swarm,
-  decomposition, voting, debate, treeOfThought,
-  evaluatorOptimizer, hitl, humanAsTool,
+  pipeline, routing, react, rag, reflection,
+  evaluatorOptimizer, planExecute, decomposition,
+  voting, treeOfThought, debate, handoff, swarm,
+  hitl, humanAsTool,
 ] as unknown as Flow[];
 
 // Walk the execution tree and any node defs to derive a flat set of tags.

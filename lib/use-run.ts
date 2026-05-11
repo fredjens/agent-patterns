@@ -133,6 +133,20 @@ const initial: RunState = {
   pendingApproval: null,
 };
 
+function normalizeError(raw: string): string {
+  const s = raw.toLowerCase();
+  if (s.includes("credit") || s.includes("402") || s.includes("billing")) {
+    return "Out of API credits";
+  }
+  if (s.includes("rate_limit") || s.includes("429") || s.includes("rate limit")) {
+    return "Rate limit reached. Wait a moment and try again.";
+  }
+  if (s.includes("529") || s.includes("overloaded")) {
+    return "The API is overloaded right now. Try again in a few seconds.";
+  }
+  return raw;
+}
+
 export function useRun() {
   const [state, dispatch] = useReducer(reducer, initial);
   const abortRef = useRef<AbortController | null>(null);
@@ -156,7 +170,7 @@ export function useRun() {
 
       if (!res.ok || !res.body) {
         const err = await res.json().catch(() => ({ error: "Request failed" }));
-        dispatch({ type: "error", error: err.error ?? "Request failed" });
+        dispatch({ type: "error", error: normalizeError(err.error ?? "Request failed") });
         return;
       }
 
@@ -185,13 +199,13 @@ export function useRun() {
       if (controller.signal.aborted) {
         dispatch({ type: "abort" });
       } else if (!completed) {
-        dispatch({ type: "error", error: "Connection closed before run completed. Check server logs." });
+        dispatch({ type: "error", error: normalizeError("Connection closed before run completed. Check server logs.") });
       }
     } catch (err) {
       if ((err as Error).name === "AbortError") {
         dispatch({ type: "abort" });
       } else {
-        dispatch({ type: "error", error: String(err) });
+        dispatch({ type: "error", error: normalizeError(String(err)) });
       }
     }
 
@@ -236,7 +250,7 @@ export function useRun() {
           break;
         case "run_error":
           completed = true;
-          dispatch({ type: "error", error: event.error });
+          dispatch({ type: "error", error: normalizeError(event.error) });
           break;
       }
     }
